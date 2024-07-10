@@ -1,6 +1,9 @@
 package src
 
-import "github.com/go-git/go-git/v5"
+import (
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/plumbing/object"
+)
 
 type Verdict interface {
 	Repository() string
@@ -29,52 +32,10 @@ func (u Untracked) Repository() string {
 	return u.repository
 }
 
-func NewUntracked(repository string, status git.Status) (Untracked, bool) {
-	var untrackedItem string
-	for path, s := range status {
-		if s.Worktree == git.Untracked || s.Staging == git.Untracked {
-			untrackedItem = path
-			break
-		}
-	}
-	if len(untrackedItem) == 0 {
-		return Untracked{}, false
-	}
-	return Untracked{
-		repository:    repository,
-		untrackedItem: untrackedItem,
-	}, true
-}
-
 type Modified struct {
 	repository       string
 	modifiedItem     string
 	modificationType git.StatusCode
-}
-
-func NewModified(repository string, status git.Status) (Modified, bool) {
-	var modifiedItem string
-	var modificationType git.StatusCode
-	for path, s := range status {
-		if s.Worktree != git.Untracked && s.Worktree != git.Unmodified {
-			modifiedItem = path
-			modificationType = s.Worktree
-			break
-		}
-		if s.Staging != git.Untracked && s.Staging != git.Unmodified {
-			modifiedItem = path
-			modificationType = s.Staging
-			break
-		}
-	}
-	if len(modifiedItem) == 0 {
-		return Modified{}, false
-	}
-	return Modified{
-		repository:       repository,
-		modifiedItem:     modifiedItem,
-		modificationType: modificationType,
-	}, true
 }
 
 func (u Modified) Repository() string {
@@ -91,20 +52,22 @@ func (u RemoteMismatch) Repository() string {
 	return u.repository
 }
 
-func (u RemoteMismatch) LocalBranch() string {
-	return u.localBranch
+type LocalOnlyBranch struct {
+	repository string
+	branchName string
 }
 
-func (u RemoteMismatch) RemoteRefName() string {
-	return u.remoteRefName
+func (u LocalOnlyBranch) Repository() string {
+	return u.repository
 }
 
-func NewRemoteMismatch(repository, localBranch, remoteRefName string) RemoteMismatch {
-	return RemoteMismatch{
-		repository:    repository,
-		localBranch:   localBranch,
-		remoteRefName: remoteRefName,
-	}
+type StashedChanges struct {
+	repository       string
+	commitUnderStash *object.Commit
+}
+
+func (u StashedChanges) Repository() string {
+	return u.repository
 }
 
 func Stringify(status git.StatusCode) string {
