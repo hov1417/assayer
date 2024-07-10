@@ -46,6 +46,7 @@ type RemoteMismatch struct {
 	repository    string
 	localBranch   string
 	remoteRefName string
+	remoteBehind  bool
 }
 
 func (u RemoteMismatch) Repository() string {

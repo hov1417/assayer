@@ -67,7 +67,11 @@ func TraverseDirectories(directory string) error {
 		case Modified:
 			fmt.Printf("%s: File \"%s\" is %s\n", verdict.Repository(), verdict.modifiedItem, Stringify(verdict.modificationType))
 		case RemoteMismatch:
-			fmt.Printf("%s: Remote Mismatch\n", verdict.Repository())
+			if verdict.remoteBehind {
+				fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is behind\n ", verdict.Repository(), verdict.localBranch)
+			} else {
+				fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is ahead\n", verdict.Repository(), verdict.localBranch)
+			}
 		case LocalOnlyBranch:
 			fmt.Printf("%s: Local Only Branch \"%s\"\n", verdict.Repository(), verdict.branchName)
 		case StashedChanges:
@@ -287,16 +291,30 @@ func checkBranches(repository string, repo *git.Repository) (Verdict, error) {
 			}
 			onlyBranchName := strings.Join(parts[1:], "/")
 
-			remoteHash, hasLocalClone := branchHashes[onlyBranchName]
+			localHash, hasLocalClone := branchHashes[onlyBranchName]
 			delete(branchHashes, onlyBranchName)
 
-			localHash := ref.Hash()
-			if hasLocalClone && localHash != remoteHash {
-				// TODO: check parentage
+			remoteHash := ref.Hash()
+			if hasLocalClone && remoteHash != localHash {
+				remoteBranchCommit, err := repo.CommitObject(ref.Hash())
+				if err != nil {
+					return nil, err
+				}
+				localBranchCommit, err := repo.CommitObject(ref.Hash())
+				if err != nil {
+					return nil, err
+				}
+
+				isRemoteAncestor, err := remoteBranchCommit.IsAncestor(localBranchCommit)
+				if err != nil {
+					return nil, err
+				}
+
 				return RemoteMismatch{
 					repository:    repository,
 					localBranch:   onlyBranchName,
 					remoteRefName: ref.Name().Short(),
+					remoteBehind:  isRemoteAncestor,
 				}, nil
 			}
 		}
