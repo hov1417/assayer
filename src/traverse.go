@@ -68,7 +68,7 @@ func TraverseDirectories(directory string) error {
 			fmt.Printf("%s: File \"%s\" is %s\n", verdict.Repository(), verdict.modifiedItem, Stringify(verdict.modificationType))
 		case RemoteMismatch:
 			if verdict.remoteBehind {
-				fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is behind\n ", verdict.Repository(), verdict.localBranch)
+				fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is behind\n", verdict.Repository(), verdict.localBranch)
 			} else {
 				fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is ahead\n", verdict.Repository(), verdict.localBranch)
 			}
@@ -112,21 +112,21 @@ func checkStatus(directory, repository string) (Verdict, error) {
 		return nil, fmt.Errorf("error checking repository status %s\n%s", repository, err)
 	}
 
-	verdict, err := checkStash(repo, repository)
-	if err != nil {
-		return nil, err
-	}
-	if verdict != nil {
-		return verdict, nil
-	}
-
-	untracked := checkUntracked(repository, status)
+	untracked, err := checkUntracked(directory, repository, status)
 	if untracked != nil {
 		return untracked, nil
 	}
 	modified := checkModified(repository, status)
 	if modified != nil {
 		return modified, nil
+	}
+
+	verdict, err := checkStash(repo, repository)
+	if err != nil {
+		return nil, err
+	}
+	if verdict != nil {
+		return verdict, nil
 	}
 
 	remoteMismatch, err := checkBranches(repository, repo)
@@ -173,7 +173,7 @@ func checkStash(repo *git.Repository, repository string) (Verdict, error) {
 	return nil, nil
 }
 
-func checkUntracked(repository string, status git.Status) Verdict {
+func checkUntracked(directory string, repository string, status git.Status) (Verdict, error) {
 	var untrackedItem string
 	for path, s := range status {
 		if s.Worktree == git.Untracked {
@@ -182,32 +182,58 @@ func checkUntracked(repository string, status git.Status) Verdict {
 		}
 	}
 	if len(untrackedItem) == 0 {
-		return nil
+		return nil, nil
 	}
-
 	untrackedPath := splitPath(untrackedItem)
 
+	fullRepository, err := filepath.Abs(filepath.Join(directory, repository))
+	if err != nil {
+		return nil, err
+	}
+
+	root := filepath.Join(fullRepository, untrackedPath[0])
+
 	maxMatch := 0
-	for path, s := range status {
-		if s.Worktree != git.Untracked || s.Staging != git.Untracked {
-			trackedPath := splitPath(path)
-			var minLen int
-			if len(trackedPath) < len(untrackedPath) {
-				minLen = len(trackedPath)
-			} else {
-				minLen = len(untrackedPath)
+	err = filepath.WalkDir(
+		root,
+		func(path string, d fs.DirEntry, err error) error {
+			if err != nil {
+				return err
 			}
-			for matchIndex := 0; matchIndex < minLen; matchIndex++ {
-				if trackedPath[matchIndex] != untrackedPath[matchIndex] {
-					if maxMatch < matchIndex {
-						maxMatch = matchIndex
+			if d.IsDir() {
+				return nil
+			}
+
+			relPath, err := filepath.Rel(fullRepository, path)
+			if err != nil {
+				return err
+			}
+
+			if _, ok := status[relPath]; !ok {
+				trackedPath := splitPath(relPath)
+				var minLen int
+				if len(trackedPath) < len(untrackedPath) {
+					minLen = len(trackedPath)
+				} else {
+					minLen = len(untrackedPath)
+				}
+				for matchIndex := 0; matchIndex < minLen; matchIndex++ {
+					if trackedPath[matchIndex] != untrackedPath[matchIndex] {
+						if maxMatch < matchIndex {
+							maxMatch = matchIndex
+						}
+						break
 					}
 				}
+				if len(untrackedPath) == maxMatch {
+					return filepath.SkipAll
+				}
 			}
-			if len(untrackedPath) == maxMatch {
-				break
-			}
-		}
+			return nil
+		})
+
+	if err != nil {
+		return nil, err
 	}
 
 	untrackedItem = filepath.Join(untrackedPath[0:(maxMatch + 1)]...)
@@ -215,7 +241,7 @@ func checkUntracked(repository string, status git.Status) Verdict {
 	return Untracked{
 		repository:    repository,
 		untrackedItem: untrackedItem,
-	}
+	}, nil
 }
 
 func splitPath(path string) []string {
@@ -330,7 +356,8 @@ func checkBranches(repository string, repo *git.Repository) (Verdict, error) {
 	return nil, nil
 }
 
-func handleDirEntry(dirFs fs.FS, directory Directory, activeTasks *int32, repositories chan string) {
+func handleDirEntry(dirFs fs.FS, directory Directory, activeTasks *int32 /* TODO replace with wait group*/, repositories chan string) {
+	// TODO nested flag
 	for _, entry := range directory.readDir {
 		if entry.IsDir() {
 			path := filepath.Join(directory.path, entry.Name())
@@ -339,6 +366,7 @@ func handleDirEntry(dirFs fs.FS, directory Directory, activeTasks *int32, reposi
 
 			readDir, err := fs.ReadDir(dirFs, path)
 			if err != nil {
+				// TODO
 				println(err)
 			}
 

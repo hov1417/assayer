@@ -13,6 +13,7 @@ func main() {
 	app.Usage = "List repositories with uncompleted work"
 	app.HideHelp = true
 	app.Commands = []cli.Command{}
+	app.Flags = []cli.Flag{}
 	app.CommandNotFound = func(c *cli.Context, command string) {
 		println("Command " + command + " not found")
 		cli.ShowAppHelpAndExit(c, 2)
