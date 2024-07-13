@@ -12,7 +12,7 @@ func TestProject(t *testing.T) {
 		t.Error(err)
 		return
 	}
-	err = assayer.TraverseDirectories(path, false)
+	err = assayer.TraverseDirectories(path, assayer.DefaultArguments())
 	if err != nil {
 		t.Error(err)
 		return

@@ -1,4 +1,4 @@
-module assayer
+module github.com/hov1417/assayer
 
 go 1.21
 
