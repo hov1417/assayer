@@ -66,7 +66,7 @@ func App(action func(c *cli.Context) error) *cli.App {
 
 			&cli.BoolFlag{
 				Name:    "nested",
-				Usage:   "Check nested repositories in repositories",
+				Usage:   "Check repositories in repositories",
 				Aliases: []string{"n"},
 			},
 		},

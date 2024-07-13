@@ -30,30 +30,30 @@ Assayer can be run from the command line. Here is the basic usage:
 - `--behind-branches, -b`: Check if there are branches that are behind the remote.
 - `--ahead-branches, -A`: Check if there are branches that are ahead of the remote.
 - `--local-only-branches, -l`: Check if there are local-only branches.
-- `--nested, -n`: Check nested repositories in repositories.
+- `--nested, -n`: Check repositories in repositories.
 
 ## Examples
 
 Check all repositories in the current directory for any uncompleted work:
 
 ```sh
-./assayer --all
+assayer --all
 ```
 
 Check a specific directory for modified files and untracked files:
 
 ```sh
-./assayer --modified --untracked /path/to/check
+assayer --modified --untracked /path/to/check
 ```
 or
 ```sh
-./assayer -mu /path/to/check
+assayer -mu /path/to/check
 ```
 
 Check nested repositories:
 
 ```sh
-./assayer --nested
+assayer --nested
 ```
 
 ## License
