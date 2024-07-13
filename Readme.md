@@ -17,7 +17,7 @@ go install github.com/hov1417/assayer@latest
 Assayer can be run from the command line. Here is the basic usage:
 
 ```sh
-./assayer [options] [root-path-to-traverse]
+assayer [options] [root-path-to-traverse]
 ```
 
 ### Options

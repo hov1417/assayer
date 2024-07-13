@@ -9,7 +9,7 @@ import (
 
 func App(action func(c *cli.Context) error) *cli.App {
 	return &cli.App{
-		Name: "Assayer", // Argonaut or Prospector
+		Name: "Assayer",
 		Usage: "List repositories with uncompleted work\n\n" +
 			"If none of the Check Type are provided and also `--all` flag is not provided, " +
 			"everything would be checked and reported except unmodified repositories.\n" +
