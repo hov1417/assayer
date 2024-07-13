@@ -64,7 +64,11 @@ func App(action func(c *cli.Context) error) *cli.App {
 				Aliases:  []string{"l"},
 			},
 
-			&cli.BoolFlag{Name: "nested", Usage: "Check nested repositories", Aliases: []string{"n"}},
+			&cli.BoolFlag{
+				Name:    "nested",
+				Usage:   "Check nested repositories in repositories",
+				Aliases: []string{"n"},
+			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			println("Command " + command + " not found")
