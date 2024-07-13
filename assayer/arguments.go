@@ -1,13 +1,15 @@
-package src
+package assayer
 
 type Arguments struct {
 	Unmodified      bool
-	Untracked       bool
 	Modified        bool
+	Untracked       bool
+	StashedChanges  bool
 	RemoteBehind    bool
 	RemoteAhead     bool
 	LocalOnlyBranch bool
-	StashedChanges  bool
+
+	Nested bool
 }
 
 func DefaultArguments() Arguments {
@@ -15,9 +17,11 @@ func DefaultArguments() Arguments {
 		Unmodified:      false,
 		Untracked:       true,
 		Modified:        true,
+		StashedChanges:  true,
 		RemoteBehind:    true,
 		RemoteAhead:     true,
 		LocalOnlyBranch: true,
-		StashedChanges:  true,
+
+		Nested: false,
 	}
 }

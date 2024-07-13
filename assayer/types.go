@@ -1,4 +1,4 @@
-package src
+package assayer
 
 import (
 	"github.com/go-git/go-git/v5"
@@ -42,14 +42,23 @@ func (u Modified) Repository() string {
 	return u.repository
 }
 
-type RemoteMismatch struct {
+type RemoteBehind struct {
 	repository    string
 	localBranch   string
 	remoteRefName string
-	remoteBehind  bool
 }
 
-func (u RemoteMismatch) Repository() string {
+func (u RemoteBehind) Repository() string {
+	return u.repository
+}
+
+type RemoteAhead struct {
+	repository    string
+	localBranch   string
+	remoteRefName string
+}
+
+func (u RemoteAhead) Repository() string {
 	return u.repository
 }
 
