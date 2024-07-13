@@ -1,7 +1,7 @@
 package main
 
 import (
-	"assayer/assayer"
+	"github.com/hov1417/assayer/assayer"
 	"path/filepath"
 	"testing"
 )

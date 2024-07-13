@@ -1,8 +1,8 @@
 package command_line
 
 import (
-	"assayer/assayer"
 	"fmt"
+	"github.com/hov1417/assayer/assayer"
 	"github.com/urfave/cli/v2"
 	"os"
 )
