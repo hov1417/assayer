@@ -24,7 +24,12 @@ func TraverseDirectories(directory string, args Arguments) error {
 		return err
 	}
 
-	err = reportResults(verdicts)
+	if args.Count {
+		err = ReportResultByCount(verdicts, args)
+	} else {
+		err = reportResults(verdicts)
+	}
+
 	if err != nil {
 		return err
 	}

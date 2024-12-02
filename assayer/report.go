@@ -30,6 +30,54 @@ func reportResults(verdicts chan HandleResponse) error {
 	return nil
 }
 
+func ReportResultByCount(verdicts chan HandleResponse, arguments Arguments) error {
+	untracked := 0
+	modified := 0
+	localOnlyBranch := 0
+	stashedChanges := 0
+	remoteAhead := 0
+	remoteBehind := 0
+	for verdictRecord := range verdicts {
+		if verdictRecord.err != nil {
+			return verdictRecord.err
+		}
+		switch verdictRecord.verdict.(type) {
+		case Unmodified:
+		case Untracked:
+			untracked += 1
+		case Modified:
+			modified += 1
+		case LocalOnlyBranch:
+			localOnlyBranch += 1
+		case StashedChanges:
+			stashedChanges += 1
+		case RemoteAhead:
+			remoteAhead += 1
+		case RemoteBehind:
+			remoteBehind += 1
+		}
+	}
+	if arguments.Untracked {
+		fmt.Printf("Untracked Repositories: %d\n", untracked)
+	}
+	if arguments.Modified {
+		fmt.Printf("Modified Repositories: %d\n", modified)
+	}
+	if arguments.LocalOnlyBranch {
+		fmt.Printf("Repositories With Local Only Branches: %d\n", localOnlyBranch)
+	}
+	if arguments.StashedChanges {
+		fmt.Printf("Repositories With Stashes: %d\n", stashedChanges)
+	}
+	if arguments.RemoteAhead {
+		fmt.Printf("Not Pulled Repositories: %d\n", remoteAhead)
+	}
+	if arguments.RemoteBehind {
+		fmt.Printf("Not Pushed Repositories: %d\n", remoteBehind)
+	}
+	return nil
+}
+
 func firstLine(message string) string {
 	newline := strings.IndexFunc(message, func(char rune) bool {
 		return char == '\n' || char == '\r'

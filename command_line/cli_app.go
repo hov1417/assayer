@@ -69,6 +69,11 @@ func App(action func(c *cli.Context) error) *cli.App {
 				Usage:   "Check repositories in repositories",
 				Aliases: []string{"n"},
 			},
+			&cli.BoolFlag{
+				Name:    "count",
+				Usage:   "Counted report",
+				Aliases: []string{"c"},
+			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			println("Command " + command + " not found")
@@ -84,6 +89,16 @@ func App(action func(c *cli.Context) error) *cli.App {
 }
 
 func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
+	arguments, err := parseTypeFlags(c)
+	if err != nil {
+		return assayer.DefaultArguments(), err
+	}
+	arguments.Count = c.Bool("count")
+	arguments.Nested = c.Bool("nested")
+	return arguments, nil
+}
+
+func parseTypeFlags(c *cli.Context) (assayer.Arguments, error) {
 	if noTypeFlagsAreSet(c) {
 		return assayer.DefaultArguments(), nil
 	}
@@ -101,7 +116,8 @@ func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
 			RemoteAhead:     true,
 			LocalOnlyBranch: true,
 
-			Nested: c.Bool("nested"),
+			Count:  false,
+			Nested: false,
 		}, nil
 	}
 
@@ -114,7 +130,8 @@ func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
 		RemoteAhead:     c.Bool("ahead-branches"),
 		LocalOnlyBranch: c.Bool("local-only-branches"),
 
-		Nested: c.Bool("nested"),
+		Count:  false,
+		Nested: false,
 	}, nil
 }
 

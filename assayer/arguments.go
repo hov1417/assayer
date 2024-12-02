@@ -9,6 +9,7 @@ type Arguments struct {
 	RemoteAhead     bool
 	LocalOnlyBranch bool
 
+	Count  bool
 	Nested bool
 }
 
