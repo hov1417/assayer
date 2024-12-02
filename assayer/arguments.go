@@ -14,6 +14,7 @@ type Arguments struct {
 	Count   bool
 	Nested  bool
 	Exclude glob.Glob
+	Deep    bool
 }
 
 func DefaultArguments() Arguments {

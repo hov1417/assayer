@@ -1,6 +1,7 @@
 package assayer
 
 import (
+	"cmp"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -32,24 +33,42 @@ func checkRepository(directory, repository string, verdicts chan<- HandleRespons
 		return
 	}
 
-	if checkedWorktree := checkWorktree(directory, repository, repo, args); !checkedWorktree.isEmpty() {
-		verdicts <- checkedWorktree
-		return
+	// TODO: refactor this
+
+	if checkedWorktree := checkWorktree(directory, repository, repo, args); checkedWorktree.isEmpty() {
+		if checkedWorktree.err != nil {
+			verdicts <- HandleResponse{err: err}
+		}
+		if checkedWorktree.untracked != nil {
+			verdicts <- HandleResponse{checkedWorktree.untracked, nil}
+		}
+		if checkedWorktree.modified != nil {
+			verdicts <- HandleResponse{checkedWorktree.modified, nil}
+		}
+		if !args.Deep {
+			return
+		}
 	}
 
 	if checkedStash := checkStash(repository, repo, args); !checkedStash.isEmpty() {
 		verdicts <- checkedStash
-		return
+		if !args.Deep {
+			return
+		}
 	}
 
 	if checkedBranches := checkBranches(repository, repo, args); !checkedBranches.isEmpty() {
 		verdicts <- checkedBranches
-		return
+		if !args.Deep {
+			return
+		}
 	}
 
 	if args.Unmodified {
 		verdicts <- HandleResponse{NewUnmodified(repository), nil}
-		return
+		if !args.Deep {
+			return
+		}
 	}
 }
 
@@ -294,27 +313,56 @@ func checkUntracked(directory string, repository string, status git.Status) Hand
 	}, nil}
 }
 
-func checkWorktree(directory, repository string, repo *git.Repository, args *Arguments) HandleResponse {
+type CheckedWorktree struct {
+	untracked Verdict
+	modified  Verdict
+	err       error
+}
+
+func (r *CheckedWorktree) isEmpty() bool {
+	return r.untracked == nil && r.modified == nil && r.err == nil
+}
+
+func checkWorktree(directory, repository string, repo *git.Repository, args *Arguments) CheckedWorktree {
 	if !args.Modified && !args.Untracked {
-		return HandleResponse{}
+		return CheckedWorktree{}
 	}
 
 	tree, err := repo.Worktree()
 	if err != nil {
-		return HandleResponse{nil, fmt.Errorf("error checking repository worktree %s\n%s", repository, err)}
+		return CheckedWorktree{nil, nil, fmt.Errorf("error checking repository worktree %s\n%s", repository, err)}
 	}
 	status, err := tree.Status()
 	if err != nil {
-		return HandleResponse{nil, fmt.Errorf("error checking repository status %s\n%s", repository, err)}
+		return CheckedWorktree{nil, nil, fmt.Errorf("error checking repository status %s\n%s", repository, err)}
 	}
-
-	if args.Modified {
-		if res := checkModified(repository, status); !res.isEmpty() {
-			return res
+	if args.Deep {
+		var checkedWorktree = CheckedWorktree{}
+		if args.Modified {
+			if modified := checkModified(repository, status); !modified.isEmpty() {
+				checkedWorktree.modified = modified.verdict
+				checkedWorktree.err = modified.err
+			}
 		}
-		return HandleResponse{}
+		if args.Untracked {
+			if untracked := checkUntracked(directory, repository, status); !untracked.isEmpty() {
+				checkedWorktree.untracked = untracked.verdict
+				checkedWorktree.err = cmp.Or(checkedWorktree.err, untracked.err)
+			}
+		}
+		return checkedWorktree
+	} else {
+		if args.Modified {
+			if modified := checkModified(repository, status); !modified.isEmpty() {
+				return CheckedWorktree{nil, modified.verdict, err}
+			}
+		}
+		if args.Untracked {
+			var untracked = checkUntracked(directory, repository, status)
+			return CheckedWorktree{untracked.verdict, nil, untracked.err}
+		}
+		return CheckedWorktree{}
 	}
-	return checkUntracked(directory, repository, status)
 }
 
 func splitPath(path string) []string {

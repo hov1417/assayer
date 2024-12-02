@@ -80,6 +80,11 @@ func App(action func(c *cli.Context) error) *cli.App {
 				Usage:   "Exclude glob pattern",
 				Aliases: []string{"e"},
 			},
+			&cli.BoolFlag{
+				Name:    "deep",
+				Usage:   "Check everything, by default only first found info will be reported",
+				Aliases: []string{"d"},
+			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			println("Command " + command + " not found")
@@ -102,6 +107,7 @@ func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
 	arguments.Count = c.Bool("count")
 	arguments.Nested = c.Bool("nested")
 	arguments.Exclude, err = glob.Compile(c.String("exclude"))
+	arguments.Deep = c.Bool("deep")
 	if err != nil {
 		return assayer.DefaultArguments(), fmt.Errorf("exclude patter is invalid: %s", err)
 	}
