@@ -22,7 +22,11 @@ func (r *HandleResponse) isEmpty() bool {
 }
 
 func checkRepository(directory, repository string, verdicts chan<- HandleResponse, args *Arguments) {
-	repo, err := git.PlainOpen(filepath.Join(directory, repository))
+	fullPath := filepath.Join(directory, repository)
+	if args.Exclude.Match(fullPath) {
+		return
+	}
+	repo, err := git.PlainOpen(fullPath)
 	if err != nil {
 		verdicts <- HandleResponse{nil, fmt.Errorf("error opening git repository %s\n%s", repository, err)}
 		return

@@ -1,5 +1,7 @@
 package assayer
 
+import "github.com/gobwas/glob"
+
 type Arguments struct {
 	Unmodified      bool
 	Modified        bool
@@ -9,8 +11,9 @@ type Arguments struct {
 	RemoteAhead     bool
 	LocalOnlyBranch bool
 
-	Count  bool
-	Nested bool
+	Count   bool
+	Nested  bool
+	Exclude glob.Glob
 }
 
 func DefaultArguments() Arguments {

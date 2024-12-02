@@ -2,6 +2,7 @@ package command_line
 
 import (
 	"fmt"
+	"github.com/gobwas/glob"
 	"github.com/hov1417/assayer/assayer"
 	"github.com/urfave/cli/v2"
 	"os"
@@ -74,6 +75,11 @@ func App(action func(c *cli.Context) error) *cli.App {
 				Usage:   "Counted report",
 				Aliases: []string{"c"},
 			},
+			&cli.StringFlag{
+				Name:    "exclude",
+				Usage:   "Exclude glob pattern",
+				Aliases: []string{"e"},
+			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			println("Command " + command + " not found")
@@ -95,6 +101,10 @@ func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
 	}
 	arguments.Count = c.Bool("count")
 	arguments.Nested = c.Bool("nested")
+	arguments.Exclude, err = glob.Compile(c.String("exclude"))
+	if err != nil {
+		return assayer.DefaultArguments(), fmt.Errorf("exclude patter is invalid: %s", err)
+	}
 	return arguments, nil
 }
 
