@@ -106,11 +106,14 @@ func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
 	}
 	arguments.Count = c.Bool("count")
 	arguments.Nested = c.Bool("nested")
-	arguments.Exclude, err = glob.Compile(c.String("exclude"))
-	arguments.Deep = c.Bool("deep")
+	exclude, err := glob.Compile(c.String("exclude"))
+	if c.IsSet("exclude") {
+		arguments.Exclude = &exclude
+	}
 	if err != nil {
 		return assayer.DefaultArguments(), fmt.Errorf("exclude patter is invalid: %s", err)
 	}
+	arguments.Deep = c.Bool("deep")
 	return arguments, nil
 }
 
@@ -131,9 +134,6 @@ func parseTypeFlags(c *cli.Context) (assayer.Arguments, error) {
 			RemoteBehind:    true,
 			RemoteAhead:     true,
 			LocalOnlyBranch: true,
-
-			Count:  false,
-			Nested: false,
 		}, nil
 	}
 
@@ -145,9 +145,6 @@ func parseTypeFlags(c *cli.Context) (assayer.Arguments, error) {
 		RemoteBehind:    c.Bool("behind-branches"),
 		RemoteAhead:     c.Bool("ahead-branches"),
 		LocalOnlyBranch: c.Bool("local-only-branches"),
-
-		Count:  false,
-		Nested: false,
 	}, nil
 }
 

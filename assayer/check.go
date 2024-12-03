@@ -24,7 +24,7 @@ func (r *HandleResponse) isEmpty() bool {
 
 func checkRepository(directory, repository string, verdicts chan<- HandleResponse, args *Arguments) {
 	fullPath := filepath.Join(directory, repository)
-	if args.Exclude.Match(fullPath) {
+	if args.Exclude != nil && (*args.Exclude).Match(fullPath) {
 		return
 	}
 	repo, err := git.PlainOpen(fullPath)
@@ -35,18 +35,24 @@ func checkRepository(directory, repository string, verdicts chan<- HandleRespons
 
 	// TODO: refactor this
 
-	if checkedWorktree := checkWorktree(directory, repository, repo, args); checkedWorktree.isEmpty() {
+	if checkedWorktree := checkWorktree(directory, repository, repo, args); !checkedWorktree.isEmpty() {
 		if checkedWorktree.err != nil {
 			verdicts <- HandleResponse{err: err}
+			if !args.Deep {
+				return
+			}
 		}
 		if checkedWorktree.untracked != nil {
 			verdicts <- HandleResponse{checkedWorktree.untracked, nil}
+			if !args.Deep {
+				return
+			}
 		}
 		if checkedWorktree.modified != nil {
 			verdicts <- HandleResponse{checkedWorktree.modified, nil}
-		}
-		if !args.Deep {
-			return
+			if !args.Deep {
+				return
+			}
 		}
 	}
 

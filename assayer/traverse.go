@@ -45,8 +45,8 @@ func checkRepositories(directory string, repositories chan RepositoryRecord, arg
 		if repositoryRecord.err != nil {
 			return nil, repositoryRecord.err
 		}
+		wg.Add(1)
 		go func(repository string) {
-			wg.Add(1)
 			checkRepository(directory, repository, verdicts, &args)
 			wg.Done()
 		}(*repositoryRecord.repository)

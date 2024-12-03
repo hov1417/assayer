@@ -58,7 +58,7 @@ func ReportResultByCount(verdicts chan HandleResponse, arguments Arguments) erro
 		}
 	}
 	if arguments.Untracked {
-		fmt.Printf("Untracked Repositories: %d\n", untracked)
+		fmt.Printf("Repositories with Untracked files: %d\n", untracked)
 	}
 	if arguments.Modified {
 		fmt.Printf("Modified Repositories: %d\n", modified)
