@@ -3,7 +3,7 @@ package command_line
 import (
 	"fmt"
 	"github.com/gobwas/glob"
-	"github.com/hov1417/assayer/assayer"
+	"github.com/hov1417/assayer/arguments"
 	"github.com/urfave/cli/v2"
 	"os"
 )
@@ -16,7 +16,7 @@ func App(action func(c *cli.Context) error) *cli.App {
 			"everything would be checked and reported except unmodified repositories.\n" +
 			"If some of the Check Type are provided then everything else would not be checked.",
 		HideHelp:               false,
-		HideHelpCommand:        true,
+		HideHelpCommand:        false,
 		UseShortOptionHandling: true,
 		UsageText:              "assayer [options] [path-to-check]",
 		Flags: []cli.Flag{
@@ -99,34 +99,34 @@ func App(action func(c *cli.Context) error) *cli.App {
 
 }
 
-func ParseFlags(c *cli.Context) (assayer.Arguments, error) {
-	arguments, err := parseTypeFlags(c)
+func ParseFlags(c *cli.Context) (arguments.Arguments, error) {
+	args, err := parseTypeFlags(c)
 	if err != nil {
-		return assayer.DefaultArguments(), err
+		return arguments.DefaultArguments(), err
 	}
-	arguments.Count = c.Bool("count")
-	arguments.Nested = c.Bool("nested")
+	args.Count = c.Bool("count")
+	args.Nested = c.Bool("nested")
 	exclude, err := glob.Compile(c.String("exclude"))
 	if c.IsSet("exclude") {
-		arguments.Exclude = &exclude
+		args.Exclude = &exclude
 	}
 	if err != nil {
-		return assayer.DefaultArguments(), fmt.Errorf("exclude patter is invalid: %s", err)
+		return arguments.DefaultArguments(), fmt.Errorf("exclude patter is invalid: %s", err)
 	}
-	arguments.Deep = c.Bool("deep")
-	return arguments, nil
+	args.Deep = c.Bool("deep")
+	return args, nil
 }
 
-func parseTypeFlags(c *cli.Context) (assayer.Arguments, error) {
-	if noTypeFlagsAreSet(c) {
-		return assayer.DefaultArguments(), nil
+func parseTypeFlags(c *cli.Context) (arguments.Arguments, error) {
+	if noTypeFlagIsSet(c) {
+		return arguments.DefaultArguments(), nil
 	}
 	if c.Bool("all") {
-		if anyTypeFlagsIsSet(c) {
-			return assayer.Arguments{},
+		if anyTypeFlagIsSet(c) {
+			return arguments.Arguments{},
 				fmt.Errorf("flag `--all` and Check Type flags should not be given simultaneously")
 		}
-		return assayer.Arguments{
+		return arguments.Arguments{
 			Unmodified:      true,
 			Modified:        true,
 			Untracked:       true,
@@ -137,7 +137,7 @@ func parseTypeFlags(c *cli.Context) (assayer.Arguments, error) {
 		}, nil
 	}
 
-	return assayer.Arguments{
+	return arguments.Arguments{
 		Unmodified:      c.Bool("unmodified"),
 		Modified:        c.Bool("modified"),
 		Untracked:       c.Bool("untracked"),
@@ -148,7 +148,7 @@ func parseTypeFlags(c *cli.Context) (assayer.Arguments, error) {
 	}, nil
 }
 
-func noTypeFlagsAreSet(c *cli.Context) bool {
+func noTypeFlagIsSet(c *cli.Context) bool {
 	return !c.IsSet("unmodified") &&
 		!c.IsSet("modified") &&
 		!c.IsSet("untracked") &&
@@ -158,8 +158,8 @@ func noTypeFlagsAreSet(c *cli.Context) bool {
 		!c.IsSet("local-only-branches")
 }
 
-func anyTypeFlagsIsSet(c *cli.Context) bool {
-	return !noTypeFlagsAreSet(c)
+func anyTypeFlagIsSet(c *cli.Context) bool {
+	return !noTypeFlagIsSet(c)
 }
 
 func RootDirectory(c *cli.Context) (string, error) {

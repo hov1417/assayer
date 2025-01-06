@@ -1,4 +1,4 @@
-package assayer
+package arguments
 
 import "github.com/gobwas/glob"
 

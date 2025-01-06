@@ -1,6 +1,9 @@
 package assayer
 
 import (
+	"github.com/hov1417/assayer/arguments"
+	"github.com/hov1417/assayer/check"
+	"github.com/hov1417/assayer/types"
 	"io/fs"
 	"os"
 	"path/filepath"
@@ -13,7 +16,7 @@ type Directory struct {
 	path    string
 }
 
-func TraverseDirectories(directory string, args Arguments) error {
+func TraverseDirectories(directory string, args arguments.Arguments) error {
 	repositories, err := findRepositories(directory, args.Nested)
 	if err != nil {
 		return err
@@ -37,8 +40,9 @@ func TraverseDirectories(directory string, args Arguments) error {
 	return nil
 }
 
-func checkRepositories(directory string, repositories chan RepositoryRecord, args Arguments) (chan HandleResponse, error) {
-	verdicts := make(chan HandleResponse, 100)
+func checkRepositories(directory string, repositories chan RepositoryRecord, args arguments.Arguments) (chan types.Response, error) {
+	verdicts := make(chan types.Response, 100)
+	assayer := check.NewAssayer(args)
 
 	var wg sync.WaitGroup
 	for repositoryRecord := range repositories {
@@ -47,7 +51,7 @@ func checkRepositories(directory string, repositories chan RepositoryRecord, arg
 		}
 		wg.Add(1)
 		go func(repository string) {
-			checkRepository(directory, repository, verdicts, &args)
+			assayer.CheckRepository(directory, repository, verdicts, &args)
 			wg.Done()
 		}(*repositoryRecord.repository)
 	}
