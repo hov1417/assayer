@@ -15,19 +15,19 @@ func reportResults(verdicts chan types.Response) error {
 		}
 		switch verdict := verdictRecord.Verdict.(type) {
 		case types.Unmodified:
-			fmt.Printf("%s: Unmodified\n", verdict.Repository())
+			fmt.Printf("%-60s| Unmodified\n", verdict.Repository())
 		case check.Untracked:
-			fmt.Printf("%s: Path \"%s\" is untracked\n", verdict.Repository(), verdict.UntrackedItem())
+			fmt.Printf("%-60s| Path \"%s\" is untracked\n", verdict.Repository(), verdict.UntrackedItem())
 		case check.Modified:
-			fmt.Printf("%s: File \"%s\" is %s\n", verdict.Repository(), verdict.ModifiedItem(), types.Stringify(verdict.ModificationType()))
+			fmt.Printf("%-60s| File \"%s\" is %s\n", verdict.Repository(), verdict.ModifiedItem(), types.Stringify(verdict.ModificationType()))
 		case check.LocalOnlyBranch:
-			fmt.Printf("%s: Local Only Branch \"%s\"\n", verdict.Repository(), verdict.BranchName())
+			fmt.Printf("%-60s| Local Only Branch \"%s\"\n", verdict.Repository(), verdict.BranchName())
 		case check.StashedChanges:
-			fmt.Printf("%s: Stashed Changes on commit \"%s\"\n", verdict.Repository(), firstLine(verdict.CommitUnderStash().Message))
+			fmt.Printf("%-60s| Stashed Changes on commit \"%s\"\n", verdict.Repository(), firstLine(verdict.CommitUnderStash().Message))
 		case check.RemoteAhead:
-			fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is ahead\n", verdict.Repository(), verdict.LocalBranch())
+			fmt.Printf("%-60s| Remote Mismatch, remote branch \"%s\" is ahead\n", verdict.Repository(), verdict.LocalBranch())
 		case check.RemoteBehind:
-			fmt.Printf("%s: Remote Mismatch, remote branch \"%s\" is behind\n", verdict.Repository(), verdict.LocalBranch())
+			fmt.Printf("%-60s| Remote Mismatch, remote branch \"%s\" is behind\n", verdict.Repository(), verdict.LocalBranch())
 		}
 	}
 	return nil
@@ -61,22 +61,22 @@ func ReportResultByCount(verdicts chan types.Response, arguments arguments.Argum
 		}
 	}
 	if arguments.Untracked {
-		fmt.Printf("Repositories with Untracked files: %d\n", untracked)
+		fmt.Printf("%-40s %d\n", "Repositories with Untracked files", untracked)
 	}
 	if arguments.Modified {
-		fmt.Printf("Modified Repositories: %d\n", modified)
+		fmt.Printf("%-40s %d\n", "Modified Repositories", modified)
 	}
 	if arguments.LocalOnlyBranch {
-		fmt.Printf("Repositories With Local Only Branches: %d\n", localOnlyBranch)
+		fmt.Printf("%-40s %d\n", "Repositories With Local Only Branches", localOnlyBranch)
 	}
 	if arguments.StashedChanges {
-		fmt.Printf("Repositories With Stashes: %d\n", stashedChanges)
+		fmt.Printf("%-40s %d\n", "Repositories With Stashes", stashedChanges)
 	}
 	if arguments.RemoteAhead {
-		fmt.Printf("Not Pulled Repositories: %d\n", remoteAhead)
+		fmt.Printf("%-40s %d\n", "Not Pulled Repositories", remoteAhead)
 	}
 	if arguments.RemoteBehind {
-		fmt.Printf("Not Pushed Repositories: %d\n", remoteBehind)
+		fmt.Printf("%-40s %d\n", "Not Pushed Repositories", remoteBehind)
 	}
 	return nil
 }
