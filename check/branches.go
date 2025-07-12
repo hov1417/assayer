@@ -52,7 +52,9 @@ func (b *BranchChecker) Check(directory, repository string, repo *git.Repository
 			yield(types.Response{Err: fmt.Errorf("cannot get references for %s\n%s", repository, err)})
 			return
 		}
-		b.checkRemoteBranches(references, branchHashes, yield, repository, repo)
+		if !b.checkRemoteBranches(references, branchHashes, yield, repository, repo) {
+			return
+		}
 
 		if b.localOnlyBranch {
 			for branch := range branchHashes {
@@ -77,7 +79,7 @@ func (b *BranchChecker) checkRemoteBranches(
 	yield func(types.Response) bool,
 	repository string,
 	repo *git.Repository,
-) {
+) bool {
 	defer references.Close()
 	for {
 		ref, err := references.Next()
@@ -86,7 +88,7 @@ func (b *BranchChecker) checkRemoteBranches(
 				break
 			}
 			yield(types.Response{Err: err})
-			return
+			return false
 		}
 
 		if !ref.Name().IsRemote() {
@@ -96,7 +98,7 @@ func (b *BranchChecker) checkRemoteBranches(
 		onlyBranchName, err := extractBranchName(repository, ref)
 		if err != nil {
 			yield(types.Response{Err: err})
-			return
+			return false
 		}
 
 		localHash, hasLocalClone := branchHashes[onlyBranchName]
@@ -107,18 +109,18 @@ func (b *BranchChecker) checkRemoteBranches(
 			remoteBranchCommit, err := repo.CommitObject(ref.Hash())
 			if err != nil {
 				yield(types.Response{Err: err})
-				return
+				return false
 			}
 			localBranchCommit, err := repo.CommitObject(ref.Hash())
 			if err != nil {
 				yield(types.Response{Err: err})
-				return
+				return false
 			}
 
 			isRemoteAncestor, err := remoteBranchCommit.IsAncestor(localBranchCommit)
 			if err != nil {
 				yield(types.Response{Err: err})
-				return
+				return false
 			}
 
 			if isRemoteAncestor {
@@ -128,7 +130,7 @@ func (b *BranchChecker) checkRemoteBranches(
 						localBranch:   onlyBranchName,
 						remoteRefName: ref.Name().Short(),
 					}}) {
-						return
+						return false
 					}
 				}
 			} else {
@@ -138,12 +140,13 @@ func (b *BranchChecker) checkRemoteBranches(
 						localBranch:   onlyBranchName,
 						remoteRefName: ref.Name().Short(),
 					}}) {
-						return
+						return false
 					}
 				}
 			}
 		}
 	}
+	return true
 }
 
 type RemoteBehind struct {

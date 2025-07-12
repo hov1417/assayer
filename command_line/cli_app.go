@@ -9,6 +9,11 @@ import (
 )
 
 func App(action func(c *cli.Context) error) *cli.App {
+	cli.VersionFlag = &cli.BoolFlag{
+		Name:    "version",
+		Aliases: []string{"V"},
+		Usage:   "print the version",
+	}
 	return &cli.App{
 		Name: "Assayer",
 		Usage: "List repositories with uncompleted work\n\n" +
@@ -19,6 +24,7 @@ func App(action func(c *cli.Context) error) *cli.App {
 		HideHelpCommand:        false,
 		UseShortOptionHandling: true,
 		UsageText:              "assayer [options] [path-to-check]",
+		Version:                "0.6.0",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "all", Usage: "Check all in repositories", Aliases: []string{"a"}},
 
@@ -85,6 +91,11 @@ func App(action func(c *cli.Context) error) *cli.App {
 				Usage:   "Check everything, by default only first found info will be reported",
 				Aliases: []string{"d"},
 			},
+			&cli.BoolFlag{
+				Name:    "verbose",
+				Usage:   "Provide detailed information in report",
+				Aliases: []string{"v"},
+			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			println("Command " + command + " not found")
@@ -114,6 +125,7 @@ func ParseFlags(c *cli.Context) (arguments.Arguments, error) {
 		return arguments.DefaultArguments(), fmt.Errorf("exclude patter is invalid: %s", err)
 	}
 	args.Deep = c.Bool("deep")
+	args.Verbose = c.Bool("verbose")
 	return args, nil
 }
 

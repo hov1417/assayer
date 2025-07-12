@@ -15,6 +15,7 @@ type Arguments struct {
 	Nested  bool
 	Exclude *glob.Glob
 	Deep    bool
+	Verbose bool
 }
 
 func DefaultArguments() Arguments {

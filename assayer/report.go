@@ -8,26 +8,58 @@ import (
 	"strings"
 )
 
-func reportResults(verdicts chan types.Response) error {
+func reportRepoResult(repo, verdictType, details string, verbose bool) error {
+	var err error = nil
+	if verbose && details != "" {
+		_, err = fmt.Printf("%-60s %-40s %-40s\n", repo, verdictType, details)
+	} else {
+		_, err = fmt.Printf("%-60s %-40s\n", repo, verdictType)
+	}
+	return err
+}
+
+func reportResults(verdicts chan types.Response, args arguments.Arguments) error {
 	for verdictRecord := range verdicts {
 		if verdictRecord.Err != nil {
 			return verdictRecord.Err
 		}
+		var err error = nil
 		switch verdict := verdictRecord.Verdict.(type) {
 		case types.Unmodified:
-			fmt.Printf("%-60s| Unmodified\n", verdict.Repository())
+			err = reportRepoResult(verdict.Repository(), "Unmodified", "", args.Verbose)
 		case check.Untracked:
-			fmt.Printf("%-60s| Path \"%s\" is untracked\n", verdict.Repository(), verdict.UntrackedItem())
+			err = reportRepoResult(
+				verdict.Repository(),
+				"Untracked",
+				fmt.Sprintf("Path \"%s\" is untracked", verdict.UntrackedItem()),
+				args.Verbose)
 		case check.Modified:
-			fmt.Printf("%-60s| File \"%s\" is %s\n", verdict.Repository(), verdict.ModifiedItem(), types.Stringify(verdict.ModificationType()))
+			err = reportRepoResult(
+				verdict.Repository(),
+				"Modified",
+				fmt.Sprintf("File \"%s\" is %s", verdict.ModifiedItem(), types.Stringify(verdict.ModificationType())),
+				args.Verbose)
 		case check.LocalOnlyBranch:
-			fmt.Printf("%-60s| Local Only Branch \"%s\"\n", verdict.Repository(), verdict.BranchName())
+			err = reportRepoResult(verdict.Repository(), "Local Only Branch", verdict.BranchName(), args.Verbose)
 		case check.StashedChanges:
-			fmt.Printf("%-60s| Stashed Changes on commit \"%s\"\n", verdict.Repository(), firstLine(verdict.CommitUnderStash().Message))
+			err = reportRepoResult(verdict.Repository(),
+				"Stashed Changes",
+				fmt.Sprintf("on commit \"%s\"", firstLine(verdict.CommitUnderStash().Message)),
+				args.Verbose)
 		case check.RemoteAhead:
-			fmt.Printf("%-60s| Remote Mismatch, remote branch \"%s\" is ahead\n", verdict.Repository(), verdict.LocalBranch())
+			err = reportRepoResult(verdict.Repository(),
+				"Remote Mismatch",
+				fmt.Sprintf("remote branch \"%s\" is ahead", verdict.LocalBranch()),
+				args.Verbose)
+			fmt.Printf("%-60s| , \n", verdict.Repository())
 		case check.RemoteBehind:
-			fmt.Printf("%-60s| Remote Mismatch, remote branch \"%s\" is behind\n", verdict.Repository(), verdict.LocalBranch())
+			err = reportRepoResult(verdict.Repository(),
+				"Remote Mismatch",
+				fmt.Sprintf("remote branch \"%s\" is behind", verdict.LocalBranch()),
+				args.Verbose)
+		}
+		if err != nil {
+			return err
 		}
 	}
 	return nil

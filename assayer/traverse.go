@@ -30,7 +30,7 @@ func TraverseDirectories(directory string, args arguments.Arguments) error {
 	if args.Count {
 		err = ReportResultByCount(verdicts, args)
 	} else {
-		err = reportResults(verdicts)
+		err = reportResults(verdicts, args)
 	}
 
 	if err != nil {
