@@ -111,7 +111,7 @@ func (b *BranchChecker) checkRemoteBranches(
 				yield(types.Response{Err: err})
 				return false
 			}
-			localBranchCommit, err := repo.CommitObject(ref.Hash())
+			localBranchCommit, err := repo.CommitObject(localHash)
 			if err != nil {
 				yield(types.Response{Err: err})
 				return false
