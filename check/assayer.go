@@ -50,6 +50,9 @@ func (a *Assayer) CheckRepository(
 	foundVerdict := false
 	for _, checker := range a.checkers {
 		for v := range checker.Check(directory, repository, repo) {
+			if v.Err != nil {
+				v.Err = fmt.Errorf("error in checker %s:\n%s", checker.ToString(), v.Err)
+			}
 			verdicts <- v
 			if !args.Deep {
 				return

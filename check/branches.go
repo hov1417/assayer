@@ -1,6 +1,7 @@
 package check
 
 import (
+	"errors"
 	"fmt"
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
@@ -98,7 +99,11 @@ func (b *BranchChecker) checkRemoteBranches(
 			if err == io.EOF {
 				break
 			}
-			yield(types.Response{Err: err})
+			yield(
+				types.Response{
+					Err: fmt.Errorf("%s, error while traversing references: %s", repository, err),
+				},
+			)
 			return false
 		}
 
@@ -108,7 +113,11 @@ func (b *BranchChecker) checkRemoteBranches(
 
 		onlyBranchName, err := extractBranchName(repository, ref)
 		if err != nil {
-			yield(types.Response{Err: err})
+			yield(
+				types.Response{
+					Err: fmt.Errorf("%s, error while extracting branch name: %s", repository, err),
+				},
+			)
 			return false
 		}
 
@@ -119,18 +128,39 @@ func (b *BranchChecker) checkRemoteBranches(
 		if hasLocalClone && remoteHash != localHash {
 			remoteBranchCommit, err := repo.CommitObject(ref.Hash())
 			if err != nil {
-				yield(types.Response{Err: err})
+				yield(types.Response{
+					Err: fmt.Errorf(
+						"%s, error while getting branch \"%s\" remote commit: %s",
+						repository,
+						onlyBranchName,
+						err,
+					),
+				})
 				return false
 			}
 			localBranchCommit, err := repo.CommitObject(localHash)
 			if err != nil {
-				yield(types.Response{Err: err})
+				yield(types.Response{Err: fmt.Errorf(
+					"%s, error while getting branch \"%s\" local commit: %s",
+					repository,
+					onlyBranchName,
+					err,
+				)})
 				return false
 			}
 
 			isRemoteAncestor, err := remoteBranchCommit.IsAncestor(localBranchCommit)
-			if err != nil {
-				yield(types.Response{Err: err})
+			if errors.Is(err, plumbing.ErrObjectNotFound) {
+				// partial git history, assuming ancestry connection not found
+				isRemoteAncestor = false
+			} else if err != nil {
+				yield(types.Response{Err: fmt.Errorf(
+					"%s: error while checking %s and %s ancestory: %s",
+					repository,
+					remoteBranchCommit.Hash,
+					localBranchCommit.Hash,
+					err,
+				)})
 				return false
 			}
 

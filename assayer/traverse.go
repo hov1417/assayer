@@ -1,6 +1,7 @@
 package assayer
 
 import (
+	"fmt"
 	"github.com/hov1417/assayer/arguments"
 	"github.com/hov1417/assayer/check"
 	"github.com/hov1417/assayer/types"
@@ -19,12 +20,12 @@ type Directory struct {
 func TraverseDirectories(directory string, args arguments.Arguments) error {
 	repositories, err := findRepositories(directory, args.Nested)
 	if err != nil {
-		return err
+		return fmt.Errorf("error finding repositories\n%s", err)
 	}
 
 	verdicts, err := checkRepositories(directory, repositories, args)
 	if err != nil {
-		return err
+		return fmt.Errorf("error checking repositories\n%s", err)
 	}
 
 	if args.Count {

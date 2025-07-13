@@ -74,7 +74,7 @@ func ReportResultByCount(verdicts chan types.Response, arguments arguments.Argum
 	remoteBehind := 0
 	for verdictRecord := range verdicts {
 		if verdictRecord.Err != nil {
-			return verdictRecord.Err
+			return fmt.Errorf("checker error: %s", verdictRecord.Err)
 		}
 		switch verdictRecord.Verdict.(type) {
 		case check.Untracked:
