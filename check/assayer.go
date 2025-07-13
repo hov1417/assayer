@@ -60,8 +60,7 @@ func (a *Assayer) CheckRepository(
 			foundVerdict = true
 		}
 	}
-
-	if !foundVerdict {
+	if !foundVerdict && args.Unmodified {
 		verdicts <- types.Response{Verdict: types.NewUnmodified(repository)}
 	}
 

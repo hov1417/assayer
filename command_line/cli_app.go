@@ -130,7 +130,7 @@ func ParseFlags(c *cli.Context) (arguments.Arguments, error) {
 }
 
 func parseTypeFlags(c *cli.Context) (arguments.Arguments, error) {
-	if noTypeFlagIsSet(c) {
+	if noTypeFlagIsSet(c) && !c.IsSet("all") {
 		return arguments.DefaultArguments(), nil
 	}
 	if c.Bool("all") {

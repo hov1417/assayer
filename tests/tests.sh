@@ -1,6 +1,7 @@
 #!/usr/bin/env bats
 
 setup_file() {
+  rm -rf tests/repos
   mkdir "tests/repos" -p
 }
 
@@ -93,20 +94,31 @@ repo3/repo                                                   Remote Ahead'
   ./tests/maker.py tests/repos/test6/repo1 clone git@github.com:hov1417/assayer.git
   ./tests/maker.py tests/repos/test6/repo1/repo stashed
   ./tests/maker.py tests/repos/test6/repo1/repo/tests/repos clone git@github.com:hov1417/assayer.git
-  expected='repo1/repo/tests/repos/repo                                  Unmodified
-repo1/repo                                                   Untracked'
-  result="$(go run . --all --nested tests/repos/test6 | sort)"
+  expected='repo1/repo                                                   Stashed Changes
+repo1/repo/tests/repos/repo                                  Unmodified'
+  result="$(go run . --all --nested --deep tests/repos/test6 | sort)"
   echo "$result"
   [ "$result" = "$expected" ]
 }
 
 
-@test "un nested" {
+@test "unnested" {
   ./tests/maker.py tests/repos/test7/repo1 clone git@github.com:hov1417/assayer.git
   ./tests/maker.py tests/repos/test7/repo1/repo stashed
   ./tests/maker.py tests/repos/test7/repo1/repo/tests/repos clone git@github.com:hov1417/assayer.git
-  expected='repo1/repo                                                   Untracked'
+  expected='repo1/repo                                                   Stashed Changes'
   result="$(go run . --all tests/repos/test7 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
+
+@test "untracked" {
+  ./tests/maker.py tests/repos/test8/repo1 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test8/repo2 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test8/repo3 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test8/repo3/repo untracked
+  expected='repo3/repo                                                   Untracked'
+  result="$(go run . --untracked tests/repos/test8 | sort)"
   echo "$result"
   [ "$result" = "$expected" ]
 }
