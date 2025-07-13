@@ -63,7 +63,7 @@ Using reporters:
 
 ```sh
 JSON_TEMPLATE='{"unmodified":{{.unmodified}}, "untracked":{{.untracked}}, "modified":{{.modified}}, "localOnlyBranch":{{.localOnlyBranch}}, "stashedChanges":{{.stashedChanges}}, "remoteAhead":{{.remoteAhead}}, "remoteBehind":{{.remoteBehind}}}'
-assayer -d -a -r $JSON_TEMPLATE /path/to/check
+assayer -d -a -r "$JSON_TEMPLATE" /path/to/check
 ```
 
 Reporters can be useful for shell prompts such as starship:
@@ -74,8 +74,8 @@ COLORED_TEMPLATE="{{if .untracked}}\e[38;5;88m{{.untracked}}{{end}}\
 {{if .localOnlyBranch}}\e[0;93m{{.localOnlyBranch}}{{end}}\
 {{if .stashedChanges}}\e[0;92m{{.stashedChanges}}{{end}}\
 {{if .remoteBehind}}\e[0;94m{{.remoteBehind}}{{end}}\
-{{if .remoteAhead}}\e[0;35m{{.remoteAhead}}{{end}} "
-assayer -d -a -r $COLORED_TEMPLATE /path/to/check
+{{if .remoteAhead}}\e[0;35m{{.remoteAhead}}{{end}}"
+assayer -d -a -r "$COLORED_TEMPLATE" /path/to/check
 ```
 and then use something like this in your starship configurations
 ```toml
