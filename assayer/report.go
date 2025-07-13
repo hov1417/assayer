@@ -5,6 +5,7 @@ import (
 	"github.com/hov1417/assayer/arguments"
 	"github.com/hov1417/assayer/check"
 	"github.com/hov1417/assayer/types"
+	"os"
 	"strings"
 )
 
@@ -18,7 +19,7 @@ func reportRepoResult(repo, verdictType, details string, verbose bool) error {
 	return err
 }
 
-func reportResults(verdicts chan types.Response, args arguments.Arguments) error {
+func ReportResults(verdicts chan types.Response, args arguments.Arguments) error {
 	for verdictRecord := range verdicts {
 		if verdictRecord.Err != nil {
 			return verdictRecord.Err
@@ -108,6 +109,51 @@ func ReportResultByCount(verdicts chan types.Response, arguments arguments.Argum
 	}
 	if arguments.RemoteBehind {
 		fmt.Printf("%-40s %d\n", "Not Pushed Repositories", remoteBehind)
+	}
+	return nil
+}
+
+func ReportResultWithReporter(verdicts chan types.Response, arguments arguments.Arguments) error {
+	unmodified := 0
+	untracked := 0
+	modified := 0
+	localOnlyBranch := 0
+	stashedChanges := 0
+	remoteAhead := 0
+	remoteBehind := 0
+	for verdictRecord := range verdicts {
+		if verdictRecord.Err != nil {
+			return fmt.Errorf("checker error: %s", verdictRecord.Err)
+		}
+		switch verdictRecord.Verdict.(type) {
+		case types.Unmodified:
+			unmodified += 1
+		case check.Untracked:
+			untracked += 1
+		case check.Modified:
+			modified += 1
+		case check.LocalOnlyBranch:
+			localOnlyBranch += 1
+		case check.StashedChanges:
+			stashedChanges += 1
+		case check.RemoteAhead:
+			remoteAhead += 1
+		case check.RemoteBehind:
+			remoteBehind += 1
+		}
+	}
+	values := make(map[string]any)
+	values["unmodified"] = unmodified
+	values["untracked"] = untracked
+	values["modified"] = modified
+	values["localOnlyBranch"] = localOnlyBranch
+	values["stashedChanges"] = stashedChanges
+	values["remoteAhead"] = remoteAhead
+	values["remoteBehind"] = remoteBehind
+
+	err := arguments.Reporter.Execute(os.Stdout, values)
+	if err != nil {
+		return fmt.Errorf("error executing template: %s", err)
 	}
 	return nil
 }

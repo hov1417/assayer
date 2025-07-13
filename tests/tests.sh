@@ -122,3 +122,27 @@ repo1/repo/tests/repos/repo                                  Unmodified'
   echo "$result"
   [ "$result" = "$expected" ]
 }
+
+@test "reporter" {
+  ./tests/maker.py tests/repos/test9/repo1 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test9/repo2 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test9/repo3 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test9/repo3/repo untracked
+  ./tests/maker.py tests/repos/test9/repo4 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test9/repo4/repo pop-commit
+  ./tests/maker.py tests/repos/test9/repo4/repo stashed
+  ./tests/maker.py tests/repos/test9/repo4/repo untracked
+  ./tests/maker.py tests/repos/test9/repo4/repo dirty
+  ./tests/maker.py tests/repos/test9/repo4/repo staged
+  ./tests/maker.py tests/repos/test9/repo5 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test9/repo5/repo committed
+  ./tests/maker.py tests/repos/test9/repo6 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test9/repo6/repo pop-commit
+  ./tests/maker.py tests/repos/test9/repo6/repo committed
+  ./tests/maker.py tests/repos/test9/repo6/repo branch
+  expected='unmodified:2,untracked:2,modified:1,localOnlyBranch:1,stashedChanges:1,remoteAhead:2,remoteBehind:1'
+  template="unmodified:{{.unmodified}},untracked:{{.untracked}},modified:{{.modified}},localOnlyBranch:{{.localOnlyBranch}},stashedChanges:{{.stashedChanges}},remoteAhead:{{.remoteAhead}},remoteBehind:{{.remoteBehind}}"
+  result="$(go run . -d -a -r $template tests/repos/test9 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}

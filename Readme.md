@@ -31,7 +31,9 @@ assayer [options] [root-path-to-traverse]
 - `--ahead-branches, -A`: Check if there are branches that are ahead of the remote.
 - `--local-only-branches, -l`: Check if there are local-only branches.
 - `--nested, -n`: Check repositories in repositories.
-- `--count, -c`: Check repositories and report number of types
+- `--count, -c`: Check repositories and report number of types.
+- `--exclude, -e`: Exclude repositories, using [glob](https://github.com/gobwas/glob) patterns.
+- `--reporter, -r`: Reporter's template using go's template syntax.
 
 ## Examples
 
@@ -56,6 +58,33 @@ Check nested repositories:
 ```sh
 assayer --nested
 ```
+
+Using reporters:
+
+```sh
+JSON_TEMPLATE='{"unmodified":{{.unmodified}}, "untracked":{{.untracked}}, "modified":{{.modified}}, "localOnlyBranch":{{.localOnlyBranch}}, "stashedChanges":{{.stashedChanges}}, "remoteAhead":{{.remoteAhead}}, "remoteBehind":{{.remoteBehind}}}'
+assayer -d -a -r $JSON_TEMPLATE /path/to/check
+```
+
+Reporters can be useful for shell prompts such as starship:
+
+```sh
+COLORED_TEMPLATE="{{if .untracked}}\e[38;5;88m{{.untracked}}{{end}}\
+{{if .modified}}\e[0;91m{{.modified}}{{end}}\
+{{if .localOnlyBranch}}\e[0;93m{{.localOnlyBranch}}{{end}}\
+{{if .stashedChanges}}\e[0;92m{{.stashedChanges}}{{end}}\
+{{if .remoteBehind}}\e[0;94m{{.remoteBehind}}{{end}}\
+{{if .remoteAhead}}\e[0;35m{{.remoteAhead}}{{end}} "
+assayer -d -a -r $COLORED_TEMPLATE /path/to/check
+```
+and then use something like this in your starship configurations
+```toml
+[custom.projects-status]
+command = 'printf $(./path/to/cached/script)'
+when = '[ "$PWD" = "$HOME" ]'
+shell = ["bash", "--noprofile", "--norc"]
+```
+
 
 ## License
 

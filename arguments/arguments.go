@@ -1,6 +1,9 @@
 package arguments
 
-import "github.com/gobwas/glob"
+import (
+	"github.com/gobwas/glob"
+	"text/template"
+)
 
 type Arguments struct {
 	Unmodified      bool
@@ -16,6 +19,8 @@ type Arguments struct {
 	Exclude *glob.Glob
 	Deep    bool
 	Verbose bool
+
+	Reporter *template.Template
 }
 
 func DefaultArguments() Arguments {

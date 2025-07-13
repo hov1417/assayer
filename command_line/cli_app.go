@@ -6,6 +6,7 @@ import (
 	"github.com/hov1417/assayer/arguments"
 	"github.com/urfave/cli/v2"
 	"os"
+	"text/template"
 )
 
 func App(action func(c *cli.Context) error) *cli.App {
@@ -24,7 +25,7 @@ func App(action func(c *cli.Context) error) *cli.App {
 		HideHelpCommand:        false,
 		UseShortOptionHandling: true,
 		UsageText:              "assayer [options] [path-to-check]",
-		Version:                "0.6.0",
+		Version:                "0.7.0",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "all", Usage: "Check all in repositories", Aliases: []string{"a"}},
 
@@ -93,8 +94,13 @@ func App(action func(c *cli.Context) error) *cli.App {
 			},
 			&cli.BoolFlag{
 				Name:    "verbose",
-				Usage:   "Provide detailed information in report",
+				Usage:   "Provide detailed information in the report",
 				Aliases: []string{"v"},
+			},
+			&cli.StringFlag{
+				Name:    "reporter",
+				Usage:   "Provide reporter's template",
+				Aliases: []string{"r"},
 			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
@@ -126,6 +132,23 @@ func ParseFlags(c *cli.Context) (arguments.Arguments, error) {
 	}
 	args.Deep = c.Bool("deep")
 	args.Verbose = c.Bool("verbose")
+	if c.IsSet("reporter") {
+		if args.Count {
+			return arguments.DefaultArguments(), fmt.Errorf(
+				"--reporter and --count flags conflict with each other",
+			)
+		}
+		reporterTemplate := c.String("reporter")
+		templateTemplate, err := template.New("reporter").Parse(reporterTemplate)
+		if err != nil {
+			return arguments.DefaultArguments(), fmt.Errorf(
+				"reporter template \"%s\" is invalid: %s",
+				reporterTemplate,
+				err,
+			)
+		}
+		args.Reporter = templateTemplate
+	}
 	return args, nil
 }
 

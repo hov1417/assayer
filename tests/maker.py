@@ -47,6 +47,10 @@ def make_untracked(repo: Path, other_args: List[str]):
     write(repo / ("file" + str(random.randint(1, 100)) + ".txt"), "untracked file\n")
 
 
+def make_branch(repo: Path, other_args: List[str]):
+    sh(["git", "branch", "new-branch"], repo)
+
+
 def clone(repo: Path, other_args: List[str]):
     remote_repo = other_args[0]
     sh(["git", "clone", remote_repo, repo / "repo"], repo)
@@ -65,6 +69,7 @@ SCENARIOS = {
     "untracked": make_untracked,
     "clone": clone,
     "pop-commit": pop_commit,
+    "branch": make_branch,
 }
 
 
