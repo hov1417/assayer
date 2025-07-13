@@ -49,7 +49,10 @@ func (s *StatusHolder) getStatus(repository string, repo *git.Repository) (*git.
 	return s.status, nil
 }
 
-func (w *WorkTreeChecker) Check(directory, repository string, repo *git.Repository) iter.Seq[types.Response] {
+func (w *WorkTreeChecker) Check(
+	directory, repository string,
+	repo *git.Repository,
+) iter.Seq[types.Response] {
 	return func(yield func(types.Response) bool) {
 		statusHolder := StatusHolder{status: nil}
 		if w.modified {
@@ -139,7 +142,12 @@ func (u Untracked) UntrackedItem() string {
 }
 
 // returns value indicating to "continue" or not
-func checkUntracked(directory string, repository string, status git.Status, yield func(types.Response) bool) bool {
+func checkUntracked(
+	directory string,
+	repository string,
+	status git.Status,
+	yield func(types.Response) bool,
+) bool {
 	var untrackedItem string
 	for path, s := range status {
 		if s.Worktree == git.Untracked {

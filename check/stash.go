@@ -20,7 +20,10 @@ func NewStashChecker(arguments arguments.Arguments) *StashChecker {
 	return &StashChecker{}
 }
 
-func (s *StashChecker) Check(directory, repository string, repo *git.Repository) iter.Seq[types.Response] {
+func (s *StashChecker) Check(
+	directory, repository string,
+	repo *git.Repository,
+) iter.Seq[types.Response] {
 	return func(yield func(types.Response) bool) {
 		references, err := repo.References()
 		if err != nil {

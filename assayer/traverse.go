@@ -40,7 +40,11 @@ func TraverseDirectories(directory string, args arguments.Arguments) error {
 	return nil
 }
 
-func checkRepositories(directory string, repositories chan RepositoryRecord, args arguments.Arguments) (chan types.Response, error) {
+func checkRepositories(
+	directory string,
+	repositories chan RepositoryRecord,
+	args arguments.Arguments,
+) (chan types.Response, error) {
 	verdicts := make(chan types.Response, 100)
 	assayer := check.NewAssayer(args)
 

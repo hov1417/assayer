@@ -32,7 +32,11 @@ func NewAssayer(arguments arguments.Arguments) Assayer {
 	}
 }
 
-func (a *Assayer) CheckRepository(directory, repository string, verdicts chan<- types.Response, args *arguments.Arguments) {
+func (a *Assayer) CheckRepository(
+	directory, repository string,
+	verdicts chan<- types.Response,
+	args *arguments.Arguments,
+) {
 	fullPath := filepath.Join(directory, repository)
 	if args.Exclude != nil && (*args.Exclude).Match(fullPath) {
 		return

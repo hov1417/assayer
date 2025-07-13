@@ -29,11 +29,16 @@ func NewBranchChecker(arguments arguments.Arguments) *BranchChecker {
 	}
 }
 
-func (b *BranchChecker) Check(directory, repository string, repo *git.Repository) iter.Seq[types.Response] {
+func (b *BranchChecker) Check(
+	directory, repository string,
+	repo *git.Repository,
+) iter.Seq[types.Response] {
 	return func(yield func(types.Response) bool) {
 		branches, err := repo.Branches()
 		if err != nil {
-			yield(types.Response{Err: fmt.Errorf("cannot get branches for %s\n%s", repository, err)})
+			yield(
+				types.Response{Err: fmt.Errorf("cannot get branches for %s\n%s", repository, err)},
+			)
 			return
 		}
 
@@ -43,13 +48,19 @@ func (b *BranchChecker) Check(directory, repository string, repo *git.Repository
 			return nil
 		})
 		if err != nil {
-			yield(types.Response{Err: fmt.Errorf("cannot get branches for %s\n%s", repository, err)})
+			yield(
+				types.Response{Err: fmt.Errorf("cannot get branches for %s\n%s", repository, err)},
+			)
 			return
 		}
 
 		references, err := repo.References()
 		if err != nil {
-			yield(types.Response{Err: fmt.Errorf("cannot get references for %s\n%s", repository, err)})
+			yield(
+				types.Response{
+					Err: fmt.Errorf("cannot get references for %s\n%s", repository, err),
+				},
+			)
 			return
 		}
 		if !b.checkRemoteBranches(references, branchHashes, yield, repository, repo) {
