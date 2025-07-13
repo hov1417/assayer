@@ -51,7 +51,6 @@ func reportResults(verdicts chan types.Response, args arguments.Arguments) error
 				"Remote Mismatch",
 				fmt.Sprintf("remote branch \"%s\" is ahead", verdict.LocalBranch()),
 				args.Verbose)
-			fmt.Printf("%-60s| , \n", verdict.Repository())
 		case check.RemoteBehind:
 			err = reportRepoResult(verdict.Repository(),
 				"Remote Mismatch",
