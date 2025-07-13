@@ -65,3 +65,48 @@ repo3/repo                                                   Remote Ahead'
   echo "$result"
   [ "$result" = "$expected" ]
 }
+
+@test "deep" {
+  ./tests/maker.py tests/repos/test5/repo1 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test5/repo1/repo pop-commit
+  ./tests/maker.py tests/repos/test5/repo1/repo stashed
+  ./tests/maker.py tests/repos/test5/repo1/repo untracked
+  ./tests/maker.py tests/repos/test5/repo1/repo dirty
+  ./tests/maker.py tests/repos/test5/repo1/repo staged
+  ./tests/maker.py tests/repos/test5/repo2 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test5/repo2/repo committed
+  ./tests/maker.py tests/repos/test5/repo3 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test5/repo3/repo pop-commit
+  ./tests/maker.py tests/repos/test5/repo3/repo committed
+  expected='repo1/repo                                                   Modified
+repo1/repo                                                   Remote Ahead
+repo1/repo                                                   Stashed Changes
+repo1/repo                                                   Untracked
+repo2/repo                                                   Remote Behind
+repo3/repo                                                   Remote Ahead'
+  result="$(go run . --deep --all tests/repos/test5 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
+
+@test "nested" {
+  ./tests/maker.py tests/repos/test6/repo1 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test6/repo1/repo stashed
+  ./tests/maker.py tests/repos/test6/repo1/repo/tests/repos clone git@github.com:hov1417/assayer.git
+  expected='repo1/repo/tests/repos/repo                                  Unmodified
+repo1/repo                                                   Untracked'
+  result="$(go run . --all --nested tests/repos/test6 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
+
+
+@test "un nested" {
+  ./tests/maker.py tests/repos/test7/repo1 clone git@github.com:hov1417/assayer.git
+  ./tests/maker.py tests/repos/test7/repo1/repo stashed
+  ./tests/maker.py tests/repos/test7/repo1/repo/tests/repos clone git@github.com:hov1417/assayer.git
+  expected='repo1/repo                                                   Untracked'
+  result="$(go run . --all tests/repos/test7 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
