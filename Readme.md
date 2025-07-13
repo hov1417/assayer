@@ -31,6 +31,7 @@ assayer [options] [root-path-to-traverse]
 - `--ahead-branches, -A`: Check if there are branches that are ahead of the remote.
 - `--local-only-branches, -l`: Check if there are local-only branches.
 - `--nested, -n`: Check repositories in repositories.
+- `--count, -c`: Check repositories and report number of types
 
 ## Examples
 
