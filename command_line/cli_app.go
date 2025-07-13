@@ -88,7 +88,7 @@ func App(action func(c *cli.Context) error) *cli.App {
 			},
 			&cli.BoolFlag{
 				Name:    "deep",
-				Usage:   "Check everything, by default only first found info will be reported",
+				Usage:   "Check everything, by default only first found info will be reported.\n\tChecks are in order [modified, untracked, stash, local only branch, remote ahead, remote behind]\n\t",
 				Aliases: []string{"d"},
 			},
 			&cli.BoolFlag{

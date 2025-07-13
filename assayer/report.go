@@ -11,9 +11,9 @@ import (
 func reportRepoResult(repo, verdictType, details string, verbose bool) error {
 	var err error = nil
 	if verbose && details != "" {
-		_, err = fmt.Printf("%-60s %-40s %-40s\n", repo, verdictType, details)
+		_, err = fmt.Printf("%-60s %-40s %s\n", repo, verdictType, details)
 	} else {
-		_, err = fmt.Printf("%-60s %-40s\n", repo, verdictType)
+		_, err = fmt.Printf("%-60s %s\n", repo, verdictType)
 	}
 	return err
 }
@@ -28,19 +28,20 @@ func reportResults(verdicts chan types.Response, args arguments.Arguments) error
 		case types.Unmodified:
 			err = reportRepoResult(verdict.Repository(), "Unmodified", "", args.Verbose)
 		case check.Untracked:
-			err = reportRepoResult(
-				verdict.Repository(),
+			err = reportRepoResult(verdict.Repository(),
 				"Untracked",
 				fmt.Sprintf("Path \"%s\" is untracked", verdict.UntrackedItem()),
 				args.Verbose)
 		case check.Modified:
-			err = reportRepoResult(
-				verdict.Repository(),
+			err = reportRepoResult(verdict.Repository(),
 				"Modified",
 				fmt.Sprintf("File \"%s\" is %s", verdict.ModifiedItem(), types.Stringify(verdict.ModificationType())),
 				args.Verbose)
 		case check.LocalOnlyBranch:
-			err = reportRepoResult(verdict.Repository(), "Local Only Branch", verdict.BranchName(), args.Verbose)
+			err = reportRepoResult(verdict.Repository(),
+				"Local Only Branch",
+				verdict.BranchName(),
+				args.Verbose)
 		case check.StashedChanges:
 			err = reportRepoResult(verdict.Repository(),
 				"Stashed Changes",
@@ -48,13 +49,13 @@ func reportResults(verdicts chan types.Response, args arguments.Arguments) error
 				args.Verbose)
 		case check.RemoteAhead:
 			err = reportRepoResult(verdict.Repository(),
-				"Remote Mismatch",
-				fmt.Sprintf("remote branch \"%s\" is ahead", verdict.LocalBranch()),
+				"Remote Ahead",
+				verdict.LocalBranch(),
 				args.Verbose)
 		case check.RemoteBehind:
 			err = reportRepoResult(verdict.Repository(),
-				"Remote Mismatch",
-				fmt.Sprintf("remote branch \"%s\" is behind", verdict.LocalBranch()),
+				"Remote Behind",
+				verdict.LocalBranch(),
 				args.Verbose)
 		}
 		if err != nil {
@@ -76,7 +77,6 @@ func ReportResultByCount(verdicts chan types.Response, arguments arguments.Argum
 			return verdictRecord.Err
 		}
 		switch verdictRecord.Verdict.(type) {
-		case types.Unmodified:
 		case check.Untracked:
 			untracked += 1
 		case check.Modified:

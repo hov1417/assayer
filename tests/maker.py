@@ -16,9 +16,16 @@ def write(p: Path, text: str):
 
 
 def make_clean(repo: Path, other_args: List[str]):
-    write(repo / "file.txt", "initial\n")
+    sh(["git", "init"], repo)
+    write(repo / "file.txt", "commit\n")
     sh(["git", "add", "."], repo)
-    sh(["git", "commit", "-m", "initial commit"], repo)
+    sh(["git", "commit", "-m", "some commit"], repo)
+
+
+def make_commit(repo: Path, other_args: List[str]):
+    write(repo / "file.txt", "commit\n")
+    sh(["git", "add", "."], repo)
+    sh(["git", "commit", "-m", "some commit"], repo)
 
 
 def make_dirty(repo: Path, other_args: List[str]):
@@ -45,14 +52,19 @@ def clone(repo: Path, other_args: List[str]):
     sh(["git", "clone", remote_repo, repo / "repo"], repo)
 
 
+def pop_commit(repo: Path, other_args: List[str]):
+    sh(["git", "reset", "HEAD^", "--hard"], repo)
+
+
 SCENARIOS = {
     "clean": make_clean,
-    "committed": make_clean,
+    "committed": make_commit,
     "dirty": make_dirty,
     "staged": make_staged,
     "stashed": make_stashed,
     "untracked": make_untracked,
     "clone": clone,
+    "pop-commit": pop_commit,
 }
 
 
@@ -64,8 +76,6 @@ def main():
 
     repo = args.path.resolve()
     repo.mkdir(parents=True, exist_ok=True)
-
-    sh(["git", "init", "-q"], repo)
 
     SCENARIOS[args.state](repo, other_args)
 
