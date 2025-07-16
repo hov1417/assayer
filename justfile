@@ -1,5 +1,5 @@
 test:
-    ./tests/tests.sh --jobs 8
+    ./tests/tests.sh --jobs 16
 
 fmt:
     golines . -w

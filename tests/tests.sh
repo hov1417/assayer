@@ -101,9 +101,9 @@ setup_file() {
   mkdir "tests/repos" -p
 }
 
-teardown_file() {
-  rm -rf tests/repos
-}
+#teardown_file() {
+#  rm -rf tests/repos
+#}
 
 @test "local commited repos" {
   make_clean tests/repos/test1/repo1
@@ -280,6 +280,42 @@ repo1/repo/tests/repos/repo                                  Unmodified'
   touch tests/repos/test12/repo1/ignored/file2.txt
   expected='repo1                                                        Local Only Branch'
   result="$(go run . -d -a tests/repos/test12 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
+
+
+@test "ignored nested repo" {
+  make_clean tests/repos/test13/repo1
+  echo "repo" > tests/repos/test13/repo1/.gitignore
+  make_clean tests/repos/test13/repo1
+  clone tests/repos/test13/repo1 git@github.com:hov1417/assayer.git
+  expected='repo1                                                        Local Only Branch'
+  result="$(go run . -d -a tests/repos/test13 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
+
+@test "local exclude" {
+  make_clean tests/repos/test14/repo1
+  echo "/ignored/" > tests/repos/test14/repo1/.git/info/exclude
+  mkdir tests/repos/test14/repo1/ignored
+  touch tests/repos/test14/repo1/ignored/file1.txt
+  touch tests/repos/test14/repo1/ignored/file2.txt
+  expected='repo1                                                        Local Only Branch'
+  result="$(go run . -d -a tests/repos/test14 | sort)"
+  echo "$result"
+  [ "$result" = "$expected" ]
+}
+
+@test "ignored nested dirty repo" {
+  make_clean tests/repos/test15/repo1
+  echo "repo" > tests/repos/test15/repo1/.gitignore
+  make_clean tests/repos/test15/repo1
+  clone tests/repos/test15/repo1 git@github.com:hov1417/assayer.git
+  make_dirty tests/repos/test15/repo1/repo
+  expected='repo1                                                        Local Only Branch'
+  result="$(go run . -d -a tests/repos/test15 | sort)"
   echo "$result"
   [ "$result" = "$expected" ]
 }
