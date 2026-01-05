@@ -10,7 +10,7 @@ import (
 
 func main() {
 	app := command_line.App(func(c *cli.Context) error {
-		workingDirectory, err := command_line.RootDirectory(c)
+		workingDirectories, err := command_line.RootDirectories(c)
 		if err != nil {
 			return err
 		}
@@ -20,7 +20,7 @@ func main() {
 			return err
 		}
 
-		err = assayer.TraverseDirectories(workingDirectory, arguments)
+		err = assayer.TraverseDirectories(workingDirectories, arguments)
 		if err != nil {
 			return fmt.Errorf("error while traversing\n%s", err)
 		}

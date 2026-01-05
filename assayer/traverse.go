@@ -2,14 +2,15 @@ package assayer
 
 import (
 	"fmt"
-	"github.com/hov1417/assayer/arguments"
-	"github.com/hov1417/assayer/check"
-	"github.com/hov1417/assayer/types"
 	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
+
+	"github.com/hov1417/assayer/arguments"
+	"github.com/hov1417/assayer/check"
+	"github.com/hov1417/assayer/types"
 )
 
 type Directory struct {
@@ -17,13 +18,23 @@ type Directory struct {
 	path    string
 }
 
-func TraverseDirectories(directory string, args arguments.Arguments) error {
-	repositories, err := findRepositories(directory, args.Nested)
-	if err != nil {
-		return fmt.Errorf("error finding repositories\n%s", err)
-	}
+func TraverseDirectories(directories []string, args arguments.Arguments) error {
 
-	verdicts, err := checkRepositories(directory, repositories, args)
+	var repositories = make(chan RepositoryRecord, 100)
+	wg := sync.WaitGroup{}
+
+	for _, dir := range directories {
+		err := findRepositories(dir, repositories, &wg, args.Nested)
+		if err != nil {
+			return fmt.Errorf("error finding repositories\n%s", err)
+		}
+	}
+	go func() {
+		wg.Wait()
+		close(repositories)
+	}()
+
+	verdicts, err := checkRepositories(repositories, args)
 	if err != nil {
 		return fmt.Errorf("error checking repositories\n%s", err)
 	}
@@ -44,7 +55,6 @@ func TraverseDirectories(directory string, args arguments.Arguments) error {
 }
 
 func checkRepositories(
-	directory string,
 	repositories chan RepositoryRecord,
 	args arguments.Arguments,
 ) (chan types.Response, error) {
@@ -57,10 +67,10 @@ func checkRepositories(
 			return nil, repositoryRecord.err
 		}
 		wg.Add(1)
-		go func(repository string) {
-			assayer.CheckRepository(directory, repository, verdicts, &args)
+		go func(repository, rootDirectory string) {
+			assayer.CheckRepository(rootDirectory, repository, verdicts, &args)
 			wg.Done()
-		}(*repositoryRecord.repository)
+		}(*repositoryRecord.repository, *repositoryRecord.rootDirectory)
 	}
 	go func() {
 		wg.Wait()
@@ -70,38 +80,31 @@ func checkRepositories(
 }
 
 type RepositoryRecord struct {
-	repository *string
-	err        error
+	repository    *string
+	rootDirectory *string
+	err           error
 }
 
-func findRepositories(directory string, nestedRepos bool) (chan RepositoryRecord, error) {
+func findRepositories(directory string, repositories chan RepositoryRecord, wg *sync.WaitGroup, nestedRepos bool) error {
 	dirFs := os.DirFS(directory)
 
 	readDir, err := fs.ReadDir(dirFs, ".")
 	if err != nil {
-		return nil, err
+		return err
 	}
-
-	wg := sync.WaitGroup{}
-
-	var repositories = make(chan RepositoryRecord, 100)
 	entry := Directory{
 		readDir,
 		".",
 	}
 	wg.Add(1)
-	go handleDirEntry(dirFs, entry, &wg, repositories, nestedRepos)
+	go handleDirEntry(dirFs, directory, entry, wg, repositories, nestedRepos)
 
-	go func() {
-		wg.Wait()
-		close(repositories)
-	}()
-
-	return repositories, nil
+	return nil
 }
 
 func handleDirEntry(
 	dirFs fs.FS,
+	rootDirectory string,
 	directory Directory,
 	wg *sync.WaitGroup,
 	repositories chan RepositoryRecord,
@@ -122,13 +125,13 @@ func handleDirEntry(
 
 			if strings.HasSuffix(path, ".git") {
 				repository := filepath.Dir(path)
-				repositories <- RepositoryRecord{&repository, nil}
+				repositories <- RepositoryRecord{&repository, &rootDirectory, nil}
 			}
 
 			if !stop {
 				readDir, err := fs.ReadDir(dirFs, path)
 				if err != nil {
-					repositories <- RepositoryRecord{nil, err}
+					repositories <- RepositoryRecord{nil, nil, err}
 				}
 
 				dirEntry := Directory{
@@ -136,7 +139,7 @@ func handleDirEntry(
 					path:    path,
 				}
 				wg.Add(1)
-				go handleDirEntry(dirFs, dirEntry, wg, repositories, nestedRepos)
+				go handleDirEntry(dirFs, rootDirectory, dirEntry, wg, repositories, nestedRepos)
 			}
 		}
 	}

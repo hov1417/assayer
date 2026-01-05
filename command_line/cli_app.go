@@ -2,11 +2,12 @@ package command_line
 
 import (
 	"fmt"
+	"os"
+	"text/template"
+
 	"github.com/gobwas/glob"
 	"github.com/hov1417/assayer/arguments"
 	"github.com/urfave/cli/v2"
-	"os"
-	"text/template"
 )
 
 func App(action func(c *cli.Context) error) *cli.App {
@@ -197,19 +198,16 @@ func anyTypeFlagIsSet(c *cli.Context) bool {
 	return !noTypeFlagIsSet(c)
 }
 
-func RootDirectory(c *cli.Context) (string, error) {
-	if c.NArg() > 1 {
-		return "", fmt.Errorf("remove unknown argument(s) %s", c.Args().Slice()[1:])
-	}
-	var workingDirectory string
-	if c.NArg() == 1 {
-		workingDirectory = c.Args().First()
+func RootDirectories(c *cli.Context) ([]string, error) {
+	var workingDirectories []string
+	if c.NArg() != 0 {
+		workingDirectories = c.Args().Slice()
 	} else {
-		var err error
-		workingDirectory, err = os.Getwd()
+		wd, err := os.Getwd()
 		if err != nil {
-			return "", fmt.Errorf("cannot get current working directory")
+			return nil, fmt.Errorf("cannot get current working directory")
 		}
+		workingDirectories = []string{wd}
 	}
-	return workingDirectory, nil
+	return workingDirectories, nil
 }
