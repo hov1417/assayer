@@ -2,14 +2,15 @@ package check
 
 import (
 	"fmt"
-	"github.com/go-git/go-git/v5"
-	"github.com/hov1417/assayer/arguments"
-	"github.com/hov1417/assayer/types"
 	"io/fs"
 	"iter"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/go-git/go-git/v5"
+	"github.com/hov1417/assayer/arguments"
+	"github.com/hov1417/assayer/types"
 )
 
 type WorkTreeChecker struct {
@@ -105,14 +106,14 @@ func (u Modified) ModificationType() git.StatusCode {
 func checkModified(repository string, status git.Status, yield func(types.Response) bool) bool {
 	var modifiedItem string
 	var modificationType git.StatusCode
-	for path, s := range status {
+	for itemPath, s := range status {
 		if s.Worktree != git.Untracked && s.Worktree != git.Unmodified {
-			modifiedItem = path
+			modifiedItem = itemPath
 			modificationType = s.Worktree
 			break
 		}
 		if s.Staging != git.Untracked && s.Staging != git.Unmodified {
-			modifiedItem = path
+			modifiedItem = itemPath
 			modificationType = s.Staging
 			break
 		}
@@ -149,9 +150,9 @@ func checkUntracked(
 	yield func(types.Response) bool,
 ) bool {
 	var untrackedItem string
-	for path, s := range status {
+	for itemPath, s := range status {
 		if s.Worktree == git.Untracked {
-			untrackedItem = path
+			untrackedItem = itemPath
 			break
 		}
 	}
