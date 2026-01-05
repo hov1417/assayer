@@ -1,12 +1,14 @@
 package check
 
 import (
+	"io"
+	"iter"
+	"path"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing/object"
 	"github.com/hov1417/assayer/arguments"
 	"github.com/hov1417/assayer/types"
-	"io"
-	"iter"
 )
 
 type StashChecker struct {
@@ -52,12 +54,20 @@ func (s *StashChecker) Check(
 					yield(types.Response{Err: err})
 					return
 				}
-				yield(types.Response{Verdict: StashedChanges{
-					repository:       repository,
-					commitUnderStash: firstParent,
-				}})
+				yield(
+					types.Response{Verdict: newStashedChanges(directory, repository, firstParent)},
+				)
 			}
 		}
+	}
+}
+
+func newStashedChanges(directory, repository string, firstParent *object.Commit) StashedChanges {
+	base := path.Base(directory)
+	return StashedChanges{
+		base:             base,
+		repository:       repository,
+		commitUnderStash: firstParent,
 	}
 }
 
@@ -66,12 +76,17 @@ func (s *StashChecker) ToString() string {
 }
 
 type StashedChanges struct {
+	base             string
 	repository       string
 	commitUnderStash *object.Commit
 }
 
 func (u StashedChanges) Repository() string {
 	return u.repository
+}
+
+func (u StashedChanges) RepositoryPath() string {
+	return path.Join(u.base, u.repository)
 }
 
 func (u StashedChanges) CommitUnderStash() *object.Commit {

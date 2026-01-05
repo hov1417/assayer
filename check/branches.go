@@ -3,14 +3,16 @@ package check
 import (
 	"errors"
 	"fmt"
+	"io"
+	"iter"
+	"path"
+	"strings"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/go-git/go-git/v5/plumbing"
 	"github.com/go-git/go-git/v5/plumbing/storer"
 	"github.com/hov1417/assayer/arguments"
 	"github.com/hov1417/assayer/types"
-	"io"
-	"iter"
-	"strings"
 )
 
 type BranchChecker struct {
@@ -64,20 +66,28 @@ func (b *BranchChecker) Check(
 			)
 			return
 		}
-		if !b.checkRemoteBranches(references, branchHashes, yield, repository, repo) {
+		if !b.checkRemoteBranches(references, branchHashes, yield, directory, repository, repo) {
 			return
 		}
 
 		if b.localOnlyBranch {
 			for branch := range branchHashes {
-				if !yield(types.Response{Verdict: LocalOnlyBranch{
-					repository: repository,
-					branchName: branch,
-				}}) {
+				if !yield(
+					types.Response{Verdict: newLocalOnlyBranch(directory, repository, branch)},
+				) {
 					return
 				}
 			}
 		}
+	}
+}
+
+func newLocalOnlyBranch(directory, repository string, branch string) LocalOnlyBranch {
+	base := path.Base(directory)
+	return LocalOnlyBranch{
+		base:       base,
+		repository: repository,
+		branchName: branch,
 	}
 }
 
@@ -89,7 +99,7 @@ func (b *BranchChecker) checkRemoteBranches(
 	references storer.ReferenceIter,
 	branchHashes map[string]plumbing.Hash,
 	yield func(types.Response) bool,
-	repository string,
+	directory, repository string,
 	repo *git.Repository,
 ) bool {
 	defer references.Close()
@@ -166,21 +176,17 @@ func (b *BranchChecker) checkRemoteBranches(
 
 			if isRemoteAncestor {
 				if b.remoteBehind {
-					if !yield(types.Response{Verdict: RemoteBehind{
-						repository:    repository,
-						localBranch:   onlyBranchName,
-						remoteRefName: ref.Name().Short(),
-					}}) {
+					if !yield(
+						types.Response{
+							Verdict: newRemoteBehind(directory, repository, onlyBranchName, ref),
+						},
+					) {
 						return false
 					}
 				}
 			} else {
 				if b.remoteAhead {
-					if !yield(types.Response{Verdict: RemoteAhead{
-						repository:    repository,
-						localBranch:   onlyBranchName,
-						remoteRefName: ref.Name().Short(),
-					}}) {
+					if !yield(types.Response{Verdict: newRemoteAhead(directory, repository, onlyBranchName, ref)}) {
 						return false
 					}
 				}
@@ -190,7 +196,36 @@ func (b *BranchChecker) checkRemoteBranches(
 	return true
 }
 
+func newRemoteBehind(
+	directory, repository string,
+	onlyBranchName string,
+	ref *plumbing.Reference,
+) RemoteBehind {
+	base := path.Base(directory)
+	return RemoteBehind{
+		base:          base,
+		repository:    repository,
+		localBranch:   onlyBranchName,
+		remoteRefName: ref.Name().Short(),
+	}
+}
+
+func newRemoteAhead(
+	directory, repository string,
+	onlyBranchName string,
+	ref *plumbing.Reference,
+) RemoteAhead {
+	base := path.Base(directory)
+	return RemoteAhead{
+		base:          base,
+		repository:    repository,
+		localBranch:   onlyBranchName,
+		remoteRefName: ref.Name().Short(),
+	}
+}
+
 type RemoteBehind struct {
+	base          string
 	repository    string
 	localBranch   string
 	remoteRefName string
@@ -198,6 +233,10 @@ type RemoteBehind struct {
 
 func (u RemoteBehind) Repository() string {
 	return u.repository
+}
+
+func (u RemoteBehind) RepositoryPath() string {
+	return path.Join(u.base, u.repository)
 }
 
 func (u RemoteBehind) LocalBranch() string {
@@ -209,6 +248,7 @@ func (u RemoteBehind) RemoteRefName() string {
 }
 
 type RemoteAhead struct {
+	base          string
 	repository    string
 	localBranch   string
 	remoteRefName string
@@ -216,6 +256,10 @@ type RemoteAhead struct {
 
 func (u RemoteAhead) Repository() string {
 	return u.repository
+}
+
+func (u RemoteAhead) RepositoryPath() string {
+	return path.Join(u.base, u.repository)
 }
 
 func (u RemoteAhead) LocalBranch() string {
@@ -227,12 +271,17 @@ func (u RemoteAhead) RemoteRefName() string {
 }
 
 type LocalOnlyBranch struct {
+	base       string
 	repository string
 	branchName string
 }
 
 func (u LocalOnlyBranch) Repository() string {
 	return u.repository
+}
+
+func (u LocalOnlyBranch) RepositoryPath() string {
+	return path.Join(u.base, u.repository)
 }
 
 func (u LocalOnlyBranch) BranchName() string {

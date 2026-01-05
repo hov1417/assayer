@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
+	"os"
+
 	"github.com/hov1417/assayer/assayer"
 	"github.com/hov1417/assayer/command_line"
 	"github.com/urfave/cli/v2"
-	"os"
 )
 
 func main() {

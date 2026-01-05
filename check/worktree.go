@@ -5,6 +5,7 @@ import (
 	"io/fs"
 	"iter"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 
@@ -62,7 +63,7 @@ func (w *WorkTreeChecker) Check(
 				yield(types.Response{Err: err})
 				return
 			}
-			if !checkModified(repository, *status, yield) {
+			if !checkModified(directory, repository, *status, yield) {
 				return
 			}
 		}
@@ -85,6 +86,7 @@ func (w *WorkTreeChecker) ToString() string {
 }
 
 type Modified struct {
+	base             string
 	repository       string
 	modifiedItem     string
 	modificationType git.StatusCode
@@ -92,6 +94,10 @@ type Modified struct {
 
 func (u Modified) Repository() string {
 	return u.repository
+}
+
+func (u Modified) RepositoryPath() string {
+	return path.Join(u.base, u.repository)
 }
 
 func (u Modified) ModifiedItem() string {
@@ -103,7 +109,11 @@ func (u Modified) ModificationType() git.StatusCode {
 }
 
 // returns value indicating to "continue" or not
-func checkModified(repository string, status git.Status, yield func(types.Response) bool) bool {
+func checkModified(
+	directory, repository string,
+	status git.Status,
+	yield func(types.Response) bool,
+) bool {
 	var modifiedItem string
 	var modificationType git.StatusCode
 	for itemPath, s := range status {
@@ -120,22 +130,41 @@ func checkModified(repository string, status git.Status, yield func(types.Respon
 	}
 
 	if len(modifiedItem) != 0 {
-		return yield(types.Response{Verdict: Modified{
-			repository:       repository,
-			modifiedItem:     modifiedItem,
-			modificationType: modificationType,
-		}})
+		return yield(
+			types.Response{
+				Verdict: newModified(directory, repository, modifiedItem, modificationType),
+			},
+		)
 	}
 	return true
 }
 
+func newModified(
+	directory, repository string,
+	modifiedItem string,
+	modificationType git.StatusCode,
+) Modified {
+	base := path.Base(directory)
+	return Modified{
+		base:             base,
+		repository:       repository,
+		modifiedItem:     modifiedItem,
+		modificationType: modificationType,
+	}
+}
+
 type Untracked struct {
+	base          string
 	repository    string
 	untrackedItem string
 }
 
 func (u Untracked) Repository() string {
 	return u.repository
+}
+
+func (u Untracked) RepositoryPath() string {
+	return path.Join(u.base, u.repository)
 }
 
 func (u Untracked) UntrackedItem() string {
@@ -216,10 +245,16 @@ func checkUntracked(
 
 	untrackedItem = filepath.Join(untrackedPath[0:(maxMatch + 1)]...)
 
-	return yield(types.Response{Verdict: Untracked{
+	return yield(types.Response{Verdict: newUntracked(directory, repository, untrackedItem)})
+}
+
+func newUntracked(directory, repository string, untrackedItem string) Untracked {
+	base := path.Base(directory)
+	return Untracked{
+		base:          base,
 		repository:    repository,
 		untrackedItem: untrackedItem,
-	}})
+	}
 }
 
 func splitPath(path string) []string {

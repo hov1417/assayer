@@ -2,11 +2,12 @@ package check
 
 import (
 	"fmt"
+	"path/filepath"
+	"reflect"
+
 	"github.com/go-git/go-git/v5"
 	"github.com/hov1417/assayer/arguments"
 	"github.com/hov1417/assayer/types"
-	"path/filepath"
-	"reflect"
 )
 
 type Assayer struct {
@@ -61,7 +62,7 @@ func (a *Assayer) CheckRepository(
 		}
 	}
 	if !foundVerdict && args.Unmodified {
-		verdicts <- types.Response{Verdict: types.NewUnmodified(repository)}
+		verdicts <- types.Response{Verdict: types.NewUnmodified(directory, repository)}
 	}
 
 }

@@ -44,7 +44,7 @@ func TraverseDirectories(directories []string, args arguments.Arguments) error {
 	} else if args.Reporter != nil {
 		err = ReportResultWithReporter(verdicts, args)
 	} else {
-		err = ReportResults(verdicts, args)
+		err = ReportResults(verdicts, args, len(directories) > 1)
 	}
 
 	if err != nil {
@@ -85,7 +85,12 @@ type RepositoryRecord struct {
 	err           error
 }
 
-func findRepositories(directory string, repositories chan RepositoryRecord, wg *sync.WaitGroup, nestedRepos bool) error {
+func findRepositories(
+	directory string,
+	repositories chan RepositoryRecord,
+	wg *sync.WaitGroup,
+	nestedRepos bool,
+) error {
 	dirFs := os.DirFS(directory)
 
 	readDir, err := fs.ReadDir(dirFs, ".")

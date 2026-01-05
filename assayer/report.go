@@ -2,11 +2,12 @@ package assayer
 
 import (
 	"fmt"
+	"os"
+	"strings"
+
 	"github.com/hov1417/assayer/arguments"
 	"github.com/hov1417/assayer/check"
 	"github.com/hov1417/assayer/types"
-	"os"
-	"strings"
 )
 
 func reportRepoResult(repo, verdictType, details string, verbose bool) error {
@@ -19,7 +20,7 @@ func reportRepoResult(repo, verdictType, details string, verbose bool) error {
 	return err
 }
 
-func ReportResults(verdicts chan types.Response, args arguments.Arguments) error {
+func ReportResults(verdicts chan types.Response, args arguments.Arguments, detailed bool) error {
 	for verdictRecord := range verdicts {
 		if verdictRecord.Err != nil {
 			return verdictRecord.Err
@@ -27,34 +28,34 @@ func ReportResults(verdicts chan types.Response, args arguments.Arguments) error
 		var err error = nil
 		switch verdict := verdictRecord.Verdict.(type) {
 		case types.Unmodified:
-			err = reportRepoResult(verdict.Repository(), "Unmodified", "", args.Verbose)
+			err = reportRepoResult(types.RepoName(verdict, detailed), "Unmodified", "", args.Verbose)
 		case check.Untracked:
-			err = reportRepoResult(verdict.Repository(),
+			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Untracked",
 				fmt.Sprintf("Path \"%s\" is untracked", verdict.UntrackedItem()),
 				args.Verbose)
 		case check.Modified:
-			err = reportRepoResult(verdict.Repository(),
+			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Modified",
 				fmt.Sprintf("File \"%s\" is %s", verdict.ModifiedItem(), types.Stringify(verdict.ModificationType())),
 				args.Verbose)
 		case check.LocalOnlyBranch:
-			err = reportRepoResult(verdict.Repository(),
+			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Local Only Branch",
 				verdict.BranchName(),
 				args.Verbose)
 		case check.StashedChanges:
-			err = reportRepoResult(verdict.Repository(),
+			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Stashed Changes",
 				fmt.Sprintf("on commit \"%s\"", firstLine(verdict.CommitUnderStash().Message)),
 				args.Verbose)
 		case check.RemoteAhead:
-			err = reportRepoResult(verdict.Repository(),
+			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Remote Ahead",
 				verdict.LocalBranch(),
 				args.Verbose)
 		case check.RemoteBehind:
-			err = reportRepoResult(verdict.Repository(),
+			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Remote Behind",
 				verdict.LocalBranch(),
 				args.Verbose)
