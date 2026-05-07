@@ -34,7 +34,12 @@ func TraverseDirectories(directories []string, args arguments.Arguments) error {
 		close(repositories)
 	}()
 
-	verdicts, err := checkRepositories(repositories, args)
+	fetcherChecker := check.FetcherChecker{
+		FetchType:  args.FetchType,
+		FetchGroup: args.FetchGroup,
+	}
+
+	verdicts, err := checkRepositories(repositories, args, fetcherChecker)
 	if err != nil {
 		return fmt.Errorf("error checking repositories\n%s", err)
 	}
@@ -57,6 +62,7 @@ func TraverseDirectories(directories []string, args arguments.Arguments) error {
 func checkRepositories(
 	repositories chan RepositoryRecord,
 	args arguments.Arguments,
+	checker check.FetcherChecker,
 ) (chan types.Response, error) {
 	verdicts := make(chan types.Response, 100)
 	assayer := check.NewAssayer(args)
@@ -68,7 +74,7 @@ func checkRepositories(
 		}
 		wg.Add(1)
 		go func(repository, rootDirectory string) {
-			assayer.CheckRepository(rootDirectory, repository, verdicts, &args)
+			assayer.CheckRepository(rootDirectory, repository, verdicts, &args, &checker)
 			wg.Done()
 		}(*repositoryRecord.repository, *repositoryRecord.rootDirectory)
 	}

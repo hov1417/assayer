@@ -28,17 +28,28 @@ func ReportResults(verdicts chan types.Response, args arguments.Arguments, detai
 		var err error = nil
 		switch verdict := verdictRecord.Verdict.(type) {
 		case types.Unmodified:
-			err = reportRepoResult(types.RepoName(verdict, detailed), "Unmodified", "", args.Verbose)
+			err = reportRepoResult(
+				types.RepoName(verdict, detailed),
+				"Unmodified",
+				"",
+				args.Verbose,
+			)
 		case check.Untracked:
 			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Untracked",
 				fmt.Sprintf("Path \"%s\" is untracked", verdict.UntrackedItem()),
 				args.Verbose)
 		case check.Modified:
-			err = reportRepoResult(types.RepoName(verdict, detailed),
+			err = reportRepoResult(
+				types.RepoName(verdict, detailed),
 				"Modified",
-				fmt.Sprintf("File \"%s\" is %s", verdict.ModifiedItem(), types.Stringify(verdict.ModificationType())),
-				args.Verbose)
+				fmt.Sprintf(
+					"File \"%s\" is %s",
+					verdict.ModifiedItem(),
+					types.Stringify(verdict.ModificationType()),
+				),
+				args.Verbose,
+			)
 		case check.LocalOnlyBranch:
 			err = reportRepoResult(types.RepoName(verdict, detailed),
 				"Local Only Branch",

@@ -186,7 +186,11 @@ func (b *BranchChecker) checkRemoteBranches(
 				}
 			} else {
 				if b.remoteAhead {
-					if !yield(types.Response{Verdict: newRemoteAhead(directory, repository, onlyBranchName, ref)}) {
+					if !yield(
+						types.Response{
+							Verdict: newRemoteAhead(directory, repository, onlyBranchName, ref),
+						},
+					) {
 						return false
 					}
 				}

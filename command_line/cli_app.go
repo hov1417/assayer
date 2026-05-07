@@ -103,6 +103,18 @@ func App(action func(c *cli.Context) error) *cli.App {
 				Usage:   "Provide reporter's template",
 				Aliases: []string{"r"},
 			},
+
+			&cli.BoolFlag{
+				Category: "Fetch",
+				Name:     "fetch-all",
+				Usage:    "Fetch all repositories before checking",
+				Aliases:  []string{"f"},
+			},
+			&cli.StringFlag{
+				Category: "Fetch",
+				Name:     "fetch-group",
+				Usage:    "Fetch groups (organization/user) repositories before checking, value is a glob pattern",
+			},
 		},
 		CommandNotFound: func(c *cli.Context, command string) {
 			println("Command " + command + " not found")
@@ -150,6 +162,24 @@ func ParseFlags(c *cli.Context) (arguments.Arguments, error) {
 		}
 		args.Reporter = templateTemplate
 	}
+
+	if c.IsSet("fetch-all") && c.IsSet("fetch-group") {
+		return arguments.DefaultArguments(), fmt.Errorf(
+			"--fetch-all and --fetch-group flags conflict with each other",
+		)
+	}
+	if c.IsSet("fetch-all") {
+		args.FetchType = arguments.FetchAll
+	}
+	if c.IsSet("fetch-group") {
+		fetchGroup, err := glob.Compile(c.String("fetch-group"))
+		if err != nil {
+			return arguments.DefaultArguments(), fmt.Errorf("fetch-group is invalid: %s", err)
+		}
+		args.FetchType = arguments.FetchSome
+		args.FetchGroup = &fetchGroup
+	}
+
 	return args, nil
 }
 

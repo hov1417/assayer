@@ -1,6 +1,7 @@
 package check
 
 import (
+	"errors"
 	"fmt"
 	"path/filepath"
 	"reflect"
@@ -37,6 +38,7 @@ func (a *Assayer) CheckRepository(
 	directory, repository string,
 	verdicts chan<- types.Response,
 	args *arguments.Arguments,
+	fetch *FetcherChecker,
 ) {
 	fullPath := filepath.Join(directory, repository)
 	if args.Exclude != nil && (*args.Exclude).Match(fullPath) {
@@ -46,6 +48,33 @@ func (a *Assayer) CheckRepository(
 	if err != nil {
 		verdicts <- types.Response{Err: fmt.Errorf("error opening git repository %s\n%s", repository, err)}
 		return
+	}
+
+	remotes, err := repo.Remotes()
+	if err != nil {
+		verdicts <- types.Response{Err: fmt.Errorf("error checking remotes %s", err)}
+		return
+	}
+	for _, remote := range remotes {
+		urls := remote.Config().URLs
+		if len(urls) == 0 {
+			continue
+		}
+		// Fetch always uses first url of remote
+		fetchUrl := urls[0]
+		if fetch.NeedsFetch(fetchUrl) {
+			err = repo.Fetch(&git.FetchOptions{
+				RemoteName: remote.Config().Name,
+			})
+			if errors.Is(err, git.NoErrAlreadyUpToDate) {
+				continue
+			}
+			fmt.Println("fetched ", fetchUrl)
+			if err != nil {
+				verdicts <- types.Response{Err: fmt.Errorf("error fetching remote %s\n%s", remote.Config().Name, err)}
+				return
+			}
+		}
 	}
 
 	foundVerdict := false

@@ -1,8 +1,17 @@
 package arguments
 
 import (
-	"github.com/gobwas/glob"
 	"text/template"
+
+	"github.com/gobwas/glob"
+)
+
+type FetchType int
+
+const (
+	FetchNone FetchType = iota
+	FetchSome
+	FetchAll
 )
 
 type Arguments struct {
@@ -20,6 +29,9 @@ type Arguments struct {
 	Deep    bool
 	Verbose bool
 
+	FetchType  FetchType
+	FetchGroup *glob.Glob
+
 	Reporter *template.Template
 }
 
@@ -32,6 +44,9 @@ func DefaultArguments() Arguments {
 		RemoteBehind:    true,
 		RemoteAhead:     true,
 		LocalOnlyBranch: true,
+
+		FetchType:  FetchNone,
+		FetchGroup: nil,
 
 		Nested: false,
 	}
