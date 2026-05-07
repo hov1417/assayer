@@ -34,6 +34,9 @@ assayer [options] [root-path-to-traverse]
 - `--count, -c`: Check repositories and report number of types.
 - `--exclude, -e`: Exclude repositories, using [glob](https://github.com/gobwas/glob) patterns.
 - `--reporter, -r`: Reporter's template using go's template syntax.
+- `--fetch-all, -f`: Fetch all repositories before checking (default: false)
+- `--fetch-group`: Fetch groups (organization/user) repositories before checking, value is a [glob](https://github.com/gobwas/glob) pattern
+
 
 ## Examples
 
