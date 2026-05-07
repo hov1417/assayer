@@ -26,7 +26,7 @@ func App(action func(c *cli.Context) error) *cli.App {
 		HideHelpCommand:        false,
 		UseShortOptionHandling: true,
 		UsageText:              "assayer [options] [path-to-check]",
-		Version:                "0.7.0",
+		Version:                "0.9.1",
 		Flags: []cli.Flag{
 			&cli.BoolFlag{Name: "all", Usage: "Check all in repositories", Aliases: []string{"a"}},
 
