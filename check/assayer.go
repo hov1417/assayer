@@ -69,7 +69,6 @@ func (a *Assayer) CheckRepository(
 			if errors.Is(err, git.NoErrAlreadyUpToDate) {
 				continue
 			}
-			fmt.Println("fetched ", fetchUrl)
 			if err != nil {
 				verdicts <- types.Response{Err: fmt.Errorf("error fetching remote %s\n%s", remote.Config().Name, err)}
 				return
